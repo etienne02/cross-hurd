@@ -60,6 +60,8 @@ fi
 #   esac
 # fi
 
+#ln -s /lib/init/rc /etc/init.d/rc
+
 rm -f /SETUP
 sync
 reboot

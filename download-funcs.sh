@@ -35,6 +35,51 @@ WGET_URL=https://ftp.gnu.org/gnu/wget/$WGET_PKG
 PERL_CROSS_URL=https://github.com/arsv/perl-cross/raw/releases/$PERL_CROSS_PKG
 PERL_URL=https://www.cpan.org/src/5.0/$PERL_PKG
 
+MESON_URL=https://github.com/mesonbuild/meson/releases/download/$MESON_VERSION/$MESON_PKG
+BISON_URL=https://ftp.gnu.org/gnu/bison/$BISON_PKG
+PACMAN_URL=https://gitlab.archlinux.org/pacman/pacman/-/releases/v$PACMAN_VERSION/downloads/$PACMAN_PKG
+PYTHON_URL=https://www.python.org/ftp/python/$PYTHON_VERSION/$PYTHON_PKG
+GDB_URL=https://ftp.gnu.org/gnu/gdb/$GDB_PKG
+M4_URL=https://ftp.gnu.org/gnu/m4/$M4_PKG
+LIBTOOL_URL=https://ftp.gnu.org/gnu/libtool/$LIBTOOL_PKG
+AUTOCONF_URL=https://ftp.gnu.org/gnu/autoconf/$AUTOCONF_PKG
+AUTOCONF_ARCHIVE_URL=https://ftp.gnu.org/gnu/autoconf-archive/$AUTOCONF_ARCHIVE_PKG
+AUTOMAKE_URL=https://ftp.gnu.org/gnu/automake/$AUTOMAKE_PKG
+NINJA_URL=https://github.com/ninja-build/ninja/archive/v$NINJA_VERSION/$NINJA_PKG
+PATCH_URL=https://ftp.gnu.org/gnu/patch/$PATCH_PKG
+TAR_URL=https://ftp.gnu.org/gnu/tar/$TAR_PKG
+XZ_URL=https://github.com/tukaani-project/xz/releases/download/v$XZ_VERSION/$XZ_PKG
+LIBDAEMON_URL=https://0pointer.de/lennart/projects/libdaemon/$LIBDAEMON_PKG
+LIBXKBCOMMON_URL=https://xkbcommon.org/download/$LIBXKBCOMMON_PKG
+XKEYBOARD_CONFIG_URL=http://www.x.org/releases/individual/data/xkeyboard-config/$XKEYBOARD_CONFIG_PKG
+PKGCONF_URL=https://distfiles.ariadne.space/pkgconf/$PKGCONF_PKG
+LIBARCHIVE_URL=https://github.com/libarchive/libarchive/releases/download/v$LIBARCHIVE_VERSION/$LIBARCHIVE_PKG
+OPENSSL_URL=https://www.openssl.org/source/$OPENSSL_PKG
+CURL_URL=https://curl.se/download/$CURL_PKG
+LIBXML2_URL=https://gitlab.gnome.org/GNOME/libxml2/-/archive/$LIBXML2_VERSION/$LIBXML2_PKG
+DIFFUTILS_URL=https://ftp.gnu.org/gnu/diffutils/$DIFFUTILS_PKG
+TEXINFO_URL=https://ftp.gnu.org/gnu/texinfo/$TEXINFO_PKG
+GZIP_URL=https://ftp.gnu.org/pub/gnu/gzip/$GZIP_PKG
+SUDO_URL=https://www.sudo.ws/sudo/dist/$SUDO_PKG
+HELP2MAN_URL=https://ftp.gnu.org/gnu/help2man/$HELP2MAN_PKG
+GIT_URL=https://www.kernel.org/pub/software/scm/git/$GIT_PKG
+ISC_DHCP_URL=https://downloads.isc.org/isc/dhcp/$ISC_DHCP_VERSION/$ISC_DHCP_PKG
+LIBPCAP_URL=https://www.tcpdump.org/release/$LIBPCAP_PKG
+GETTEXT_URL=https://ftp.gnu.org/pub/gnu/gettext/$GETTEXT_PKG
+GPERF_URL=https://ftp.gnu.org/pub/gnu/gperf/$GPERF_PKG
+LIBASSUAN_URL=https://gnupg.org/ftp/gcrypt/libassuan/$LIBASSUAN_PKG
+PO4A_URL=https://github.com/mquinson/po4a/releases/download/v$PO4A_VERSION/$PO4A_PKG
+READLINE_URL=https://ftp.gnu.org/gnu/readline/$READLINE_PKG
+PERL_BUILD_URL=https://search.cpan.org/CPAN/authors/id/L/LE/LEONT/$PERL_BUILD_PKG
+PERL_INC_LATEST_URL=https://search.cpan.org/CPAN/authors/id/D/DA/DAGOLDEN/$PERL_INC_LATEST_PKG
+ELFUTILS_URL=https://sourceware.org/ftp/elfutils/$ELFUTILS_VERSION/$ELFUTILS_PKG
+XXHASH_URL=https://github.com/Cyan4973/xxHash/archive/refs/tags/v$XXHASH_VERSION.tar.gz
+DEBUGEDIT_URL=https://sourceware.org/ftp/debugedit/$DEBUGEDIT_VERSION/$DEBUGEDIT_PKG
+LZ4_URL=https://github.com/lz4/lz4/releases/download/v$LZ4_VERSION/$LZ4_PKG
+ZSTD_URL=https://github.com/facebook/zstd/releases/download/v$ZSTD_VERSION/$ZSTD_PKG
+CMAKE_URL=https://gitlab.kitware.com/cmake/cmake/-/archive/v$CMAKE_VERSION/$CMAKE_PKG
+LIBSSH2_URL=https://www.libssh2.org/download/$LIBSSH2_PKG
+
 unpack() {
   if [ -d "$3" ]; then
     return 0
@@ -134,6 +179,7 @@ download_hurd() {
   download_from_git hurd git://git.savannah.gnu.org/hurd/hurd.git &&
     pushd hurd &&
     apply_patch $SCRIPT_DIR/patches/hurd/link-rump.patch 1 &&
+    apply_patch $SCRIPT_DIR/patches/hurd/hurd-refcounts-assert.patch 1 &&
     popd
 }
 
@@ -327,4 +373,51 @@ download_perl() {
     unpack xf $PERL_CROSS_PKG $PERL_CROSS_SRC &&
     download $PERL_PKG $PERL_URL &&
     unpack xf $PERL_PKG $PERL_SRC
+}
+
+download_sed () {
+	download $SED_PKG $SED_URL &&
+	if [ -d "$SED_SRC" ]; then
+		return 0
+	fi
+	unpack xf $SED_PKG $SED_SRC
+}
+
+download_ifupdown () {
+   download_from_git rumpkernel https://salsa.debian.org/debian/ifupdown.git
+}
+
+download_patch () {
+   download $PATCH_PKG $PATCH_URL &&
+   if [ -d $PATCH_SRC ]; then
+      return 0
+   fi
+   unpack xf $PATCH_PKG $PATCH_SRC &&
+   pushd $PATCH_SRC &&
+   apply_patch $SCRIPT_DIR/patches/patch/path_max.patch  1 &&
+   popd
+}
+
+download_xxhash () {
+  if [ -d $XXHASH_SRC ]; then
+    return 0
+  fi
+  wget $XXHASH_URL &&
+  mv "v${XXHASH_VERSION}.tar.gz" $XXHASH_PKG
+  unpack xf $XXHASH_PKG $XXHASH_SRC
+}
+
+download_pacman () {
+   download $PACMAN_PKG $PACMAN_URL &&
+   if [ -d $PACMAN_SRC ]; then
+      return 0
+   fi
+   unpack xf $PACMAN_PKG $PACMAN_SRC &&
+   pushd $PACMAN_SRC &&
+   apply_patch $SCRIPT_DIR/patches/pacman/0001-Hurd-define-PATH_MAX.patch  1 &&
+   apply_patch $SCRIPT_DIR/patches/pacman/0001-makepkg-Clear-ERR-trap-before-trying-to-restore-it.patch  1 &&
+   apply_patch $SCRIPT_DIR/patches/pacman/0002-Hurd-define-PIPE_BUF.patch  1 &&
+   apply_patch $SCRIPT_DIR/patches/pacman/0003-Hurd-use-FAKED_MODE-instead-of-FAKEROOTKEY-for-faker.patch  1 &&
+   apply_patch $SCRIPT_DIR/patches/pacman/0004-Hurd-use-V-for-fakeroot-version-output.patch  1 &&
+   popd
 }

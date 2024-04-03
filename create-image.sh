@@ -5,7 +5,7 @@
 LOOP=$(sudo losetup -f)
 LOOPPART="${LOOP}p1"
 IMG=hd.img
-IMG_SIZE=10GB
+IMG_SIZE=50GB
 BASE_SYS_ROOT=$(basename $SYS_ROOT)
 
 create_image() {
@@ -43,6 +43,7 @@ copy_files() {
     install -d -m700 mount/var/lib/sshd &&
     mkdir -p mount/servers/{socket,bus} &&
     cp -R files/etc/* mount/etc/ &&
+    cp -R files/bin/* mount/bin/ &&
     mkdir -p mount/etc/hurd &&
     cp files/runsystem.hurd mount/libexec/ &&
     chmod ogu+x mount/libexec/runsystem.hurd &&
@@ -80,6 +81,17 @@ copy_files() {
     echo "Cross-compiled from a $HOST on $(date)" >>mount/etc/motd &&
     # Ensure all files are owned by root inside the system image.
     sudo chown root:root -R mount/*
+
+
+    sudo mkdir -p mount/share/hurd &&
+    sudo mkdir -p mount/lib/locale &&
+    sudo cp -R /usr/share/X11/locale mount/share/X11 &&  # HACK HACK HACK to have compose working
+    sudo ln -svf /bin/gcc mount/bin/cc &&
+    sudo ln -svf /bin/i686-gnu-mig mount/bin/mig &&
+    sudo ln -svf /bin/i686-gnu-ar mount/bin/ar &&
+    sudo ln -svf /bin mount/usr/bin &&
+    sudo ln -svf /share mount/usr/share &&
+    sudo cp $CROSS_TOOLS/lib/gcc/i686-gnu/${GCC_VERSION}/include/limits.h mount/lib/gcc/i686-gnu/${GCC_VERSION}/include/limits.h  # HACK to have limits.h in the machine
 }
 
 install_grub() {
@@ -100,6 +112,49 @@ qemu_arch() {
   else
     echo "x86_64"
   fi
+}
+
+post_install () {
+    #sudo cp -R src/$PERL_SRC mount/root &&
+    sudo cp -R src/$AUTOCONF_SRC mount/root &&
+    sudo cp -R src/$AUTOMAKE_SRC mount/root &&
+    sudo cp -R src/$AUTOCONF_ARCHIVE_SRC mount/root &&
+    sudo cp -R src/$GETTEXT_SRC mount/root &&
+    sudo cp -R src/$PO4A_SRC mount/root &&
+    sudo cp -R src/$BISON_SRC mount/root &&
+    sudo cp -R src/$PKGCONF_SRC mount/root &&
+    sudo cp -R src/$PYTHON_SRC mount/root &&
+    sudo cp -R src/$OPENSSL_SRC mount/root &&
+    sudo cp -R src/$LIBARCHIVE_SRC mount/root &&
+    sudo cp -R src/$NINJA_SRC mount/root &&
+    #sudo cp -R src/$LIBXKBCOMMON_SRC mount/root &&
+    #sudo cp -R src/$XKEYBOARD_CONFIG_SRC mount/root &&
+    sudo cp -RL src/$HURD_SRC mount/root &&
+    sudo cp -R src/$TEXINFO_SRC mount/root &&
+    sudo cp -R src/$GZIP_SRC mount/root &&
+
+    sudo cp -R src/$CURL_SRC mount/root &&
+    sudo cp -R src/$GIT_SRC mount/root &&
+    sudo cp -R src/$PACMAN_SRC mount/root &&
+    sudo cp -R src/$SUDO_SRC mount/root &&
+
+    sudo cp -R src/$CMAKE_SRC mount/root &&
+    sudo cp -R src/$ZSTD_SRC mount/root &&
+    sudo cp -R src/$PERL_INC_LATEST_SRC mount/root &&
+    sudo cp -R src/$PERL_BUILD_SRC mount/root &&
+    sudo cp -R src/$BASH_SRC mount/root &&
+
+    sudo cp package-versions.sh mount/root/ &&
+    sudo cp package-vars.sh mount/root/ &&
+    sudo cp step1.sh mount/root/ &&
+    sudo chown root:root -R mount/root/* &&
+    sudo chmod u+x mount/root/step1.sh
+
+    sudo mkdir -p mount/opt/meson &&
+    sudo cp -R src/$MESON_SRC/* mount/opt/meson &&
+
+    sudo mkdir -p mount/home/aur &&
+    sudo chown 1001:1001 mount/home/aur
 }
 
 qemu_net() {
@@ -129,6 +184,7 @@ generate_ssh_host_keys &&
   mount_image &&
   copy_files &&
   install_grub &&
+  post_install &&
   print_info "Disk image available on $IMG" &&
   print_info "Run the following command to boot the image:" &&
   echo "    qemu-system-$(qemu_arch) --enable-kvm -m 4G -drive cache=writeback,file=$IMG -M q35 $(qemu_net)" &&
