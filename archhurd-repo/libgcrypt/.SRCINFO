@@ -1,0 +1,24 @@
+pkgbase = libgcrypt
+	pkgdesc = General purpose cryptographic library based on the code from GnuPG
+	pkgver = 1.11.1
+	pkgrel = 1
+	url = https://www.gnupg.org
+	arch = x86_64
+	license = BSD-3-Clause
+	license = BSD-3-Clause OR GPL-2.0-only
+	license = GPL-2.0-or-later
+	license = LGPL-2.0-or-later
+	license = LGPL-2.1-or-later
+	license = X11
+	license = LicenseRef-scancode-public-domain
+	license = LicenseRef-OCB1
+	depends = libgpg-error
+	depends = glibc
+	options = !emptydirs
+	source = https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.11.1.tar.bz2
+	source = https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.11.1.tar.bz2.sig
+	validpgpkeys = 6DAA6E64A76D2840571B4902528897B826403ADA
+	sha256sums = 24e91c9123a46c54e8371f3a3a2502f1198f2893fbfbf59af95bc1c21499b00e
+	sha256sums = SKIP
+
+pkgname = libgcrypt

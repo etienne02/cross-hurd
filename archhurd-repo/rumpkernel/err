@@ -1,0 +1,125 @@
+err() prints from errno, not from eval.
+Also, better print a backtrace in some cases
+
+---
+ pci-userspace/src-gnu/pci_user-gnu.c |   48 +++++++++++++++++++++++++++++------
+ 1 file changed, 41 insertions(+), 7 deletions(-)
+
+Index: rumpkernel/pci-userspace/src-gnu/pci_user-gnu.c
+===================================================================
+--- rumpkernel.orig/pci-userspace/src-gnu/pci_user-gnu.c
++++ rumpkernel/pci-userspace/src-gnu/pci_user-gnu.c
+@@ -45,7 +45,9 @@
+ #include <sys/io.h>
+ 
+ #include <assert.h>
++#include <stdarg.h>
+ #include <err.h>
++#include <execinfo.h>
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <inttypes.h>
+@@ -96,6 +98,26 @@ static device_t acpi_dev;
+ #define PCI_CFG1_START 0xcf8
+ #define PCI_CFG1_END   0xcff
+ 
++static void err_backtrace(int eval, const char *fmt, ...)
++{
++	static const size_t size = 128;
++	static const int skip = 1;
++	void *buffer[size];
++	int nptrs;
++
++	nptrs = backtrace(buffer, size);
++
++	if (nptrs > skip) {
++		backtrace_symbols_fd(&buffer[skip], nptrs - skip, STDERR_FILENO);
++		fflush(stderr);
++	}
++
++	va_list ap;
++	va_start(ap, fmt);
++	verr(eval, fmt, ap);
++	va_end(ap);
++}
++
+ int
+ rumpcomp_pci_iospace_init(void)
+ {
+@@ -119,6 +141,7 @@ static struct pci_device *pci_devices[NU
+ static void
+ pci_userspace_init(void)
+ {
++	kern_return_t ret;
+ 	/* FIXME: add a hook to make rump call this, once and only once */
+ 	static int is_init = 0;
+ 	if (is_init)
+@@ -126,11 +149,15 @@ pci_userspace_init(void)
+ 
+ 	MACH_PRINT("pci_userspace_init\n");
+ 
+-	if (get_privileged_ports (&master_host, &master_device))
++	if ((ret = get_privileged_ports (&master_host, &master_device))) {
++		errno = ret;
+ 		err(1, "get_privileged_ports");
++	}
+ 
+-	if (device_open (master_device, D_READ, "irq", &irq_dev))
++	if ((ret = device_open (master_device, D_READ, "irq", &irq_dev))) {
++		errno = ret;
+ 		err(2, "device_open irq");
++	}
+ 
+ 	/* Optional */
+ 	if (device_open (master_device, D_READ, "acpi", &acpi_dev)) {
+@@ -522,8 +549,10 @@ rumpcomp_pci_virt_to_mach(void *virt)
+ 
+ 	tp = mach_task_self();
+ 	ret = mach_vm_region_info(tp, vaddr, &region, &object);
+-	if (KERN_SUCCESS != ret)
+-		err(ret, "mach_vm_region_info");
++	if (KERN_SUCCESS != ret) {
++		errno = ret;
++		err_backtrace(ret, "mach_vm_region_info(%p)", (void*) vaddr);
++	}
+ 
+ 	ret = mach_vm_object_pages_phys(object, &pages_phys, &pagesCnt);
+ 	if (ret == KERN_SUCCESS)
+@@ -547,16 +576,20 @@ rumpcomp_pci_virt_to_mach(void *virt)
+ 		}
+ 
+ 		ret = vm_deallocate(tp, (vm_address_t)pages_phys, pagesCnt*sizeof(*pages_phys));
+-		if (KERN_SUCCESS != ret)
+-			err(ret, "vm_deallocate");
++		if (KERN_SUCCESS != ret) {
++			errno = ret;
++			err_backtrace(ret, "vm_deallocate(%p)", (void*) pages_phys);
++		}
+ 	}
+ 	else
+ 	{
+ 		/* Fallback to non-PAE RPC, hoping for the best  */
+ 
+ 		ret = mach_vm_object_pages(object, &pages, &pagesCnt);
+-		if (KERN_SUCCESS != ret)
+-			err(ret, "mach_vm_object_pages");
++		if (KERN_SUCCESS != ret) {
++			errno = ret;
++			err_backtrace(ret, "mach_vm_object_pages(%u)", object);
++		}
+ 
+ 		mach_port_deallocate(mach_task_self(), object);
+ 
+@@ -577,8 +610,10 @@ rumpcomp_pci_virt_to_mach(void *virt)
+ 		}
+ 
+ 		ret = vm_deallocate(tp, (vm_address_t)pages, pagesCnt*sizeof(*pages));
+-		if (KERN_SUCCESS != ret)
+-			err(ret, "vm_deallocate");
++		if (KERN_SUCCESS != ret) {
++			errno = ret;
++			err_backtrace(ret, "vm_deallocate(%p)", (void*) pages);
++		}
+ 	}
+ 
+ 	if (paddr == 0){

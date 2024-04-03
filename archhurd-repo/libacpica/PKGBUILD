@@ -1,0 +1,36 @@
+# Maintainer: Etienne Brateau <etienne (dot) brateau (at) gmail (dot) com>
+
+pkgname=libacpica
+pkgver=20220331.2
+_commit=7b3d290d60a7095cf5510a3d3d7d991a1e59d4fd
+pkgrel=1
+pkgdesc="ACPICA for hurd as a library for userland"
+arch=(i686)
+url="https://www.acpica.org/"
+license=('GPL-2.0')
+depends=(glibc)
+# TODO replace by acpica from upstream + generation with patch here https://git.zammit.org/libacpica.git/commit/?id=271c7d36d58a90c77e0cc49e6f746939e2312a30
+source=("git+https://salsa.debian.org/hurd-team/libacpica#commit=$_commit")
+sha256sums=('SKIP')
+validpgpkeys=()
+
+prepare() {
+	cd "$pkgname"
+	patch -p1 -i "$srcdir/$pkgname/debian/patches/acgnu.diff"
+	patch -p1 -i "$srcdir/$pkgname/debian/patches/acenv.diff"
+	patch -p1 -i "$srcdir/$pkgname/debian/patches/add-makefile.diff"
+	patch -p1 -i "$srcdir/$pkgname/debian/patches/globalstate.diff"
+	patch -p1 -i "$srcdir/$pkgname/debian/patches/actypes.diff"
+	patch -p1 -i "$srcdir/$pkgname/debian/patches/fix-struct-struct.diff"
+	patch -p1 -i "$srcdir/$pkgname/debian/patches/acpi-init-files.diff"
+}
+
+build() {
+	cd "$pkgname"
+	make
+}
+
+package() {
+	cd "$pkgname"
+	make PREFIX="/usr/" libdir="/usr/lib/" DESTDIR="$pkgdir/" install
+}

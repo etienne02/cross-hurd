@@ -1,0 +1,43 @@
+From e9f8e6a439fd607adbdd846ab93267dc367b5c79 Mon Sep 17 00:00:00 2001
+From: Paul Eggert <eggert@cs.ucla.edu>
+Date: Fri, 28 Feb 2025 22:53:28 -0800
+Subject: diff: fix allocation typo leading to crashes
+
+But reported by Nick Smallbone, with one-line fix by
+Collin Funk <https://bugs.gnu.org/76613>.
+* src/io.c (find_and_hash_each_line): Fix size computation.
+---
+ NEWS     | 3 +++
+ src/io.c | 2 +-
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/NEWS b/NEWS
+index 73d98d6..bfc4035 100644
+--- a/NEWS
++++ b/NEWS
+@@ -8,6 +8,9 @@ GNU diffutils NEWS                                    -*- outline -*-
+   file to a nonempty regular file.
+   [bug#76452 introduced in 3.11]
+ 
++  diff -y no longer crashes when given nontrivial differences.
++  [bug#76613 introduced in 3.11]
++
+ 
+ * Noteworthy changes in release 3.11 (2025-02-02) [stable]
+ 
+diff --git a/src/io.c b/src/io.c
+index a62c529..eba4aba 100644
+--- a/src/io.c
++++ b/src/io.c
+@@ -1012,7 +1012,7 @@ find_and_hash_each_line (struct file_data *current)
+ 	  linbuf += linbuf_base;
+ 	  linbuf = xpalloc (linbuf, &n, 1, -1, sizeof *linbuf);
+ 	  linbuf -= linbuf_base;
+-	  alloc_lines = n - linbuf_base;
++	  alloc_lines = linbuf_base + n;
+         }
+       linbuf[line] = p;
+ 
+-- 
+cgit v1.1
+

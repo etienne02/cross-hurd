@@ -1,0 +1,15 @@
+Do not use arc4random_buf: during bootstrap we don't have it
+
+Index: rumpkernel-0~20211031/netbsd/lib/librumpuser/rumpuser_random.c
+===================================================================
+--- rumpkernel-0~20211031.orig/netbsd/lib/librumpuser/rumpuser_random.c
++++ rumpkernel-0~20211031/netbsd/lib/librumpuser/rumpuser_random.c
+@@ -46,6 +46,8 @@ __RCSID("$NetBSD: rumpuser_random.c,v 1.
+ 
+ #include "rumpuser_int.h"
+ 
++#undef HAVE_ARC4RANDOM_BUF
++
+ static const size_t random_maxread = 32;
+ 
+ #ifdef HAVE_ARC4RANDOM_BUF

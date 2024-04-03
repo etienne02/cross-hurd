@@ -1,0 +1,110 @@
+# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# Contributor: Daniel Micay <danielmicay@gmail.com>
+# Contributor: Mladen Pejakovic <pejakm@gmail.com>
+
+pkgbase=libxkbcommon
+pkgname=(
+  libxkbcommon
+)
+pkgver=1.10.0
+pkgrel=1
+pkgdesc='Keymap handling library for toolkits and window systems'
+url='https://xkbcommon.org/'
+arch=(x86_64)
+license=(MIT)
+makedepends=(
+  bash-completion
+  doxygen
+  git
+  glibc
+  graphviz
+  libxcb
+  libxml2
+  meson
+  wayland
+  wayland-protocols
+  xkeyboard-config
+  xorgproto
+)
+checkdepends=(
+  libgl
+  xorg-server-xvfb
+)
+source=("git+https://github.com/xkbcommon/libxkbcommon#tag=xkbcommon-$pkgver")
+b2sums=('f5533437ced68d012f54e7cba2bd42e58c85f98db4018db358876f8fe097c9c0e5b0a77309e6f80ffcf7c03183c4828fdb29cb017d2790e49045c72b09eb90e1')
+
+prepare() {
+  cd libxkbcommon
+}
+
+build() {
+  local meson_options=(
+    -D enable-docs=false
+    -D enable-x11=false
+    -D enable-wayland=false
+  )
+
+  arch-meson libxkbcommon build "${meson_options[@]}"
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+_pick() {
+  local p="$1" f d; shift
+  for f; do
+    d="$srcdir/$p/${f#$pkgdir/}"
+    mkdir -p "$(dirname "$d")"
+    mv "$f" "$d"
+    rmdir -p --ignore-fail-on-non-empty "$(dirname "$f")"
+  done
+}
+
+package_libxkbcommon() {
+  depends=(
+    glibc
+    libxml2
+    xkeyboard-config
+  )
+  optdepends=(
+    'libxkbcommon-x11: xkbcli interactive-x11'
+    'wayland: xkbcli interactive-wayland'
+  )
+  provides=(
+    libxkbcommon.so
+    libxkbregistry.so
+  )
+
+  meson install -C build --destdir "$pkgdir"
+
+  install -Dt "$pkgdir/usr/share/licenses/$pkgname" -m644 libxkbcommon/LICENSE
+}
+
+package_libxkbcommon-x11() {
+  pkgdesc='Keyboard handling library using XKB data for X11 XCB clients'
+  depends=(
+    glibc
+    libxcb
+    libxkbcommon
+    libxkbcommon.so
+  )
+  provides=(
+    libxkbcommon-x11.so
+  )
+
+  mv x11/* "$pkgdir"/
+
+  install -Dt "$pkgdir/usr/share/licenses/$pkgname" -m644 libxkbcommon/LICENSE
+}
+
+package_libxkbcommon-doc() {
+  pkgdesc='API documentation for libxkbcommon'
+
+  mv doc/* "$pkgdir"/
+
+  install -Dt "$pkgdir/usr/share/licenses/$pkgname" -m644 libxkbcommon/LICENSE
+}
+
+# vim:set sw=2 sts=-1 et:

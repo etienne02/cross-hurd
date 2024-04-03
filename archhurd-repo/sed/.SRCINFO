@@ -1,0 +1,17 @@
+pkgbase = sed
+	pkgdesc = GNU stream editor
+	pkgver = 4.9
+	pkgrel = 3
+	url = https://www.gnu.org/software/sed/
+	arch = x86_64
+	license = GPL3
+	makedepends = gettext
+	depends = glibc
+	depends = acl
+	source = https://ftp.gnu.org/pub/gnu/sed/sed-4.9.tar.xz
+	source = https://ftp.gnu.org/pub/gnu/sed/sed-4.9.tar.xz.sig
+	validpgpkeys = 155D3FC500C834486D1EEA677FD9FCCB000BEEEE
+	sha256sums = 6e226b732e1cd739464ad6862bd1a1aba42d7982922da7a53519631d24975181
+	sha256sums = SKIP
+
+pkgname = sed

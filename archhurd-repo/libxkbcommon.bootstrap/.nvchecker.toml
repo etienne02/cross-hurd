@@ -1,0 +1,4 @@
+[libxkbcommon]
+source = "git"
+git = "https://github.com/xkbcommon/libxkbcommon.git"
+prefix = "xkbcommon-"

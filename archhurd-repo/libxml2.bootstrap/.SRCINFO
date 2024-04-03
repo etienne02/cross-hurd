@@ -1,0 +1,28 @@
+pkgbase = libxml2
+	pkgdesc = XML C parser and toolkit
+	pkgver = 2.14.4
+	pkgrel = 2
+	url = https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home
+	arch = x86_64
+	license = MIT
+	makedepends = git
+	makedepends = meson
+	makedepends = python
+	depends = bash
+	depends = glibc
+	depends = icu
+	depends = readline
+	depends = xz
+	depends = zlib
+	source = git+https://gitlab.gnome.org/GNOME/libxml2.git#tag=v2.14.4
+	source = https://www.w3.org/XML/Test/xmlts20130923.tar.gz
+	b2sums = b83cacaa96d747ca4ada13a77c0b41522817c6d42561f119d4d06e9ca074532bc4da2bd6b02e87308c429450b24e2e988cddd95c9d31d09662100d80493487fe
+	b2sums = 63a47bc69278ef510cd0b3779aed729e1b309e30efa0015d28ed051cc03f9dfddb447ab57b07b3393e8f47393d15473b0e199c34cb1f5f746b15ddfaa55670be
+
+pkgname = libxml2
+	optdepends = python: Python bindings
+	provides = libxml2.so
+
+pkgname = libxml2-docs
+	pkgdesc = XML C parser and toolkit (documentation)
+	depends = 

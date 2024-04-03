@@ -1,0 +1,39 @@
+# Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Contributor: Gaetan Bisson <bisson@archlinux.org>
+# Contributor: Vesa Kaihlavirta <vesa@archlinux.org>
+# Contributor: Roman Cheplyaka <roma@ro-che.info>
+
+pkgname=libedit
+pkgver=20250104_3.1
+_pkgver=${pkgver/_/-}
+pkgrel=1
+pkgdesc='Command line editor library providing generic line editing, history, and tokenization functions'
+url='https://thrysoee.dk/editline/'
+arch=(x86_64)
+license=(BSD-3-Clause)
+depends=(
+  glibc
+  libncursesw.so
+  ncurses
+)
+source=(${url}/${pkgname}-${_pkgver}.tar.gz)
+b2sums=('21fe2971fa85e75d988b6c3ec2a8cb30afbb6f73f9f06ce8b3aed7f0edb47df576cac57e231073dcc430dec65c8a1043501fe069b84bae12f250047839f65d93')
+
+build() {
+  cd ${pkgname}-${_pkgver}
+  ./configure \
+    --prefix=/usr
+  make V=1
+}
+
+package() {
+  provides=(libedit.so)
+
+  cd ${pkgname}-${_pkgver}
+  make DESTDIR="${pkgdir}" install
+
+  install -Dm 644 ChangeLog -t "${pkgdir}/usr/share/doc/${pkgname}"
+  install -Dm 644 COPYING -t "${pkgdir}/usr/share/licenses/${pkgname}"
+}
+
+# vim:set sw=2 sts=-1 et:

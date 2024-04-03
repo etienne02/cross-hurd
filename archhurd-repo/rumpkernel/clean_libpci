@@ -1,0 +1,13 @@
+Index: rumpkernel/netbsd/sys/rump/dev/Makefile.rumpdevcomp
+===================================================================
+--- rumpkernel.orig/netbsd/sys/rump/dev/Makefile.rumpdevcomp
++++ rumpkernel/netbsd/sys/rump/dev/Makefile.rumpdevcomp
+@@ -27,7 +27,7 @@ RUMPDEVLDADD+=-lrumpdev_${var}
+ RUMPDEVLIBS+=lib${var}
+ .endfor
+ 
+-.if make(rumpdescribe)
++.if make(rumpdescribe) || make(cleandir)
+ .for var in ${RUMPPCIDEVS}
+ RUMPDEVLIBS+=lib${var}
+ .endfor

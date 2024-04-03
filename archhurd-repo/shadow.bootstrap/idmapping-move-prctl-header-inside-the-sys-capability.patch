@@ -1,0 +1,29 @@
+From aab3c090b88ce50c8106aec50d18af6a2ec58487 Mon Sep 17 00:00:00 2001
+From: Etienne Brateau <etienne.brateau@gmail.com>
+Date: Wed, 2 Apr 2025 18:42:29 +0200
+Subject: [PATCH] idmapping: move prctl header inside the sys/capability.h
+ check
+
+This header is not defined on hurd and is used only if capability is
+enabled.
+---
+ lib/idmapping.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/idmapping.c b/lib/idmapping.c
+index ef685f32..f4729f14 100644
+--- a/lib/idmapping.c
++++ b/lib/idmapping.c
+@@ -12,8 +12,8 @@
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <strings.h>
+-#include <sys/prctl.h>
+ #if __has_include(<sys/capability.h>)
++#include <sys/prctl.h>
+ # include <sys/capability.h>
+ #endif
+ 
+-- 
+2.49.0
+

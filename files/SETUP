@@ -40,6 +40,12 @@ for device in vcs std ptyp ptyq cd0 cd1 hd0 hd0s1 sd0 rumpdisk wd0 wd0s1 tty1 tt
 done
 set +v
 
+# XXX shm uses tmpfs by default, it is not stable enough for now
+# So do like debian and replace it with a symlink to /tmp
+settrans -fg /dev/shm
+rmdir /dev/shm
+ln -sf /tmp /dev/shm
+
 # Rely on QEMU's default's user networking
 # https://wiki.qemu.org/Documentation/Networking
 /bin/settrans -c /servers/socket/2 /hurd/pfinet -i /dev/eth0 -a 10.0.2.15 -g 10.0.2.2 -m 255.255.255.0
@@ -59,6 +65,8 @@ fi
 #       /bin/sh /INSTALL-GRUB-MBR /dev/$BOOT_DEV;;
 #   esac
 # fi
+
+#ln -s /lib/init/rc /etc/init.d/rc
 
 rm -f /SETUP
 sync

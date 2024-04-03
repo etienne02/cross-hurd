@@ -1,0 +1,46 @@
+
+Status: Equivalent patch merged in NetBSD CVS
+
+Index: rumpkernel/netbsd/sys/rump/include/rump/rumpuser.h
+===================================================================
+--- rumpkernel.orig/netbsd/sys/rump/include/rump/rumpuser.h
++++ rumpkernel/netbsd/sys/rump/include/rump/rumpuser.h
+@@ -255,4 +255,8 @@ int	rumpuser_sp_raise(void *, int);
+ void	rumpuser_sp_fini(void *);
+ #endif /* _RUMP_SYSPROXY || LIBRUMPUSER */
+ 
++#ifndef MAXHOSTNAMELEN
++#define MAXHOSTNAMELEN 256
++#endif
++
+ #endif /* _RUMP_RUMPUSER_H_ */
+Index: rumpkernel/netbsd/lib/librumpuser/sp_common.c
+===================================================================
+--- rumpkernel.orig/netbsd/lib/librumpuser/sp_common.c
++++ rumpkernel/netbsd/lib/librumpuser/sp_common.c
+@@ -67,6 +67,10 @@
+ #define __printflike(a,b) __attribute__((__format__(__printf__, a, b))))
+ #endif
+ 
++#ifndef PATH_MAX
++#define PATH_MAX 4096
++#endif
++
+ //#define DEBUG
+ #ifdef DEBUG
+ #define DPRINTF(x) mydprintf x
+Index: rumpkernel/netbsd/usr.bin/rump_allserver/rump_allserver.c
+===================================================================
+--- rumpkernel.orig/netbsd/usr.bin/rump_allserver/rump_allserver.c
++++ rumpkernel/netbsd/usr.bin/rump_allserver/rump_allserver.c
+@@ -50,6 +50,10 @@ __RCSID("$NetBSD: rump_allserver.c,v 1.3
+ #include <rump/rumpdefs.h>
+ #include <rump/rumperr.h>
+ 
++#ifndef MAXPATHLEN
++#define MAXPATHLEN 4096
++#endif
++
+ __dead static void
+ usage(void)
+ {

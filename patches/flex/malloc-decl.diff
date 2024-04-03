@@ -1,0 +1,14 @@
+diff --git a/lib/malloc.c b/lib/malloc.c
+index 75e8ef97c..701b9b39d 100755
+--- a/lib/malloc.c
++++ b/lib/malloc.c
+@@ -3,7 +3,7 @@
+      
+      #include <sys/types.h>
+      
+-     void *malloc ();
++     void *malloc (size_t n);
+      
+      /* Allocate an N-byte block of memory from the heap.
+         If N is zero, allocate a 1-byte block.  */
+
