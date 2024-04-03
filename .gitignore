@@ -4,3 +4,7 @@ src/
 manifest-*
 hd.img
 *.swp
+cross-tools-i686
+tools-i686
+manifest-i686.txt
+archhurd-repo
