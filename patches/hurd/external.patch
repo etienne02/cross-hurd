@@ -1,0 +1,74 @@
+From 38c15473e4633c9da255e4a1cc6dab30dacbd709 Mon Sep 17 00:00:00 2001
+From: Etienne Brateau <etienne.brateau@gmail.com>
+Date: Wed, 10 Apr 2024 15:14:35 +0200
+Subject: [PATCH] Include DDE in the build
+
+---
+ Makeconf       | 2 +-
+ Makefile       | 8 ++++++++
+ config.make.in | 3 +++
+ configure.ac   | 2 ++
+ 4 files changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/Makeconf b/Makeconf
+index 7585260d..b2c27fec 100644
+--- a/Makeconf
++++ b/Makeconf
+@@ -594,7 +594,7 @@ vpath %.defs $(top_srcdir)/hurd
+ # These we want to find in the libc include directory...
+ mach_defs_names = bootstrap exc mach mach4 \
+ 	mach_host mach_port mach_timer_reply memory_object \
+-	memory_object_default notify \
++	memory_object_default notify experimental \
+ 	gnumach \
+ 	task_notify \
+ 
+diff --git a/Makefile b/Makefile
+index 4d848221..6a7336aa 100644
+--- a/Makefile
++++ b/Makefile
+@@ -34,6 +34,14 @@ lib-subdirs = libshouldbeinlibc libihash libiohelp libports \
+ 	      libmachdev \
+ 	      libirqhelp \
+ 
++ifneq ($(HAVE_LIBPCIACCESS),no)
++lib-subdirs += libmachdevdde libddekit
++endif
++
++ifeq ($(HAVE_PCAP),yes)
++lib-subdirs += eth-filter
++endif
++
+ # Hurd programs
+ prog-subdirs = auth proc exec term \
+ 	       ext2fs isofs tmpfs fatfs \
+diff --git a/config.make.in b/config.make.in
+index 1a30626b..2aef37eb 100644
+--- a/config.make.in
++++ b/config.make.in
+@@ -124,6 +124,9 @@ HAVE_LIBACPICA = @HAVE_LIBACPICA@
+ libacpica_CFLAGS = @libacpica_CFLAGS@
+ libacpica_LIBS = @libacpica_LIBS@
+ 
++# Wether pcap support is available
++HAVE_PCAP = @HAVE_PCAP@
++
+ # Installation tools.
+ INSTALL = @INSTALL@
+ INSTALL_PROGRAM = @INSTALL_PROGRAM@
+diff --git a/configure.ac b/configure.ac
+index a2e325cc..a819542b 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -283,6 +283,8 @@ AC_SUBST(boot_store_types)dnl
+ AC_MSG_CHECKING(boot store types)
+ AC_MSG_RESULT($boot_store_types)
+ 
++AC_CHECK_HEADER([pcap.h], [HAVE_PCAP=yes], [HAVE_PCAP=no])
++
+ # Check for ncursesw, which is needed for the console-curses client.
+ hurd_LIB_NCURSESW
+ 
+-- 
+2.44.0
+

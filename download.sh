@@ -72,4 +72,54 @@ mkdir -p $SOURCE &&
     download_glibc &&
     download_libacpica &&
     download_rumpkernel &&
+
+download $BISON_PKG $BISON_URL &&
+unpack xf $BISON_PKG $BISON_SRC &&
+download $DIFFUTILS_PKG $DIFFUTILS_URL &&
+unpack xf $DIFFUTILS_PKG $DIFFUTILS_SRC &&
+download $GZIP_PKG $GZIP_URL &&
+unpack xf $GZIP_PKG $GZIP_SRC &&
+download $TEXINFO_PKG $TEXINFO_URL &&
+unpack xf $TEXINFO_PKG $TEXINFO_SRC &&
+download $M4_PKG $M4_URL &&
+unpack xf $M4_PKG $M4_SRC &&
+download $LIBTOOL_PKG $LIBTOOL_URL &&
+unpack xf $LIBTOOL_PKG $LIBTOOL_SRC &&
+download $AUTOCONF_PKG $AUTOCONF_URL &&
+unpack xf $AUTOCONF_PKG $AUTOCONF_SRC &&
+download $AUTOCONF_ARCHIVE_PKG $AUTOCONF_ARCHIVE_URL &&
+unpack xf $AUTOCONF_ARCHIVE_PKG $AUTOCONF_ARCHIVE_SRC &&
+download $AUTOMAKE_PKG $AUTOMAKE_URL &&
+unpack xf $AUTOMAKE_PKG $AUTOMAKE_SRC &&
+download $PKGCONF_PKG $PKGCONF_URL &&
+unpack xf $PKGCONF_PKG $PKGCONF_SRC &&
+download $NINJA_PKG $NINJA_URL &&
+unpack xf $NINJA_PKG $NINJA_SRC &&
+download_patch &&
+download $LIBXKBCOMMON_PKG $LIBXKBCOMMON_URL &&
+unpack xf $LIBXKBCOMMON_PKG $LIBXKBCOMMON_SRC &&
+download $XKEYBOARD_CONFIG_PKG $XKEYBOARD_CONFIG_URL &&
+unpack xf $XKEYBOARD_CONFIG_PKG $XKEYBOARD_CONFIG_SRC &&
+download $LIBXML2_PKG $LIBXML2_URL &&
+unpack zxf $LIBXML2_PKG $LIBXML2_SRC &&
+download $HELP2MAN_PKG $HELP2MAN_URL &&
+unpack xf $HELP2MAN_PKG $HELP2MAN_SRC &&
+download $TAR_PKG $TAR_URL &&
+unpack xf $TAR_PKG $TAR_SRC &&
+download $XZ_PKG $XZ_URL &&
+unpack xf $XZ_PKG $XZ_SRC &&
+download $PYTHON_PKG $PYTHON_URL &&
+unpack xf $PYTHON_PKG $PYTHON_SRC &&
+download $MESON_PKG $MESON_URL &&
+unpack xf $MESON_PKG $MESON_SRC &&
+download_pacman &&
+download $LIBARCHIVE_PKG $LIBARCHIVE_URL &&
+unpack xf $LIBARCHIVE_PKG $LIBARCHIVE_SRC &&
+download $SUDO_PKG $SUDO_URL &&
+unpack zxf $SUDO_PKG $SUDO_SRC &&
+download $ISC_DHCP_PKG $ISC_DHCP_URL &&
+unpack zxf $ISC_DHCP_PKG $ISC_DHCP_SRC &&
+download $GETTEXT_PKG $GETTEXT_URL &&
+unpack zxf $GETTEXT_PKG $GETTEXT_SRC &&
+download_ifupdown &&
     echo "Download complete."
