@@ -1,0 +1,79 @@
+--- a/pci-userspace/src-gnu/Makefile.inc
++++ b/pci-userspace/src-gnu/Makefile.inc
+@@ -3,8 +3,8 @@
+ PCIDIR:=	${.PARSEDIR}
+ .PATH:		${PCIDIR}
+
+-RUMPCOMP_USER_SRCS=	pci_user-gnu.c mach_debugUser.c
++RUMPCOMP_USER_SRCS=	pci_user-gnu.c mach_debugUser.c acpiUser.c
+ RUMPCOMP_USER_CPPFLAGS+=-I${PCIDIR} -I${DESTDIR}/usr/include
+ RUMPCOMP_CPPFLAGS+=	-I${PCIDIR} -I${DESTDIR}/usr/include
+ CPPFLAGS+=		-I${PCIDIR}
+ LDFLAGS+= -lmachuser -Wl,--no-as-needed -lpciaccess -Wl,--as-needed
+@@ -16,3 +16,11 @@
+ 			-user mach_debugUser.c \
+ 			-server /dev/null \
+ 			-header mach_debug_U.h
++
++acpiUser.c:
++	echo '#include <hurd/acpi.defs>' \
++		| ${CC} -E -x c - -o - \
++		| $(MIG) -cc cat - /dev/null -subrprefix __ \
++			-user acpiUser.c \
++			-server /dev/null \
++			-header acpi_U.h
+--- a/pci-userspace/src-gnu/pci_user-gnu.c
++++ b/pci-userspace/src-gnu/pci_user-gnu.c
+@@ -67,6 +67,7 @@
+ #include <device/device.h>
+ #include <mach/gnumach.h>
+ #include "mach_debug_U.h"
++#include "acpi_U.h"
+ #include <mach/vm_param.h>
+ #include <mach.h>
+
+@@ -90,6 +91,7 @@
+ static mach_port_t master_host;
+ static mach_port_t master_device;
+ static device_t irq_dev;
++static device_t acpi_dev;
+
+ #define PCI_CFG1_START 0xcf8
+ #define PCI_CFG1_END   0xcff
+@@ -130,6 +132,12 @@
+ 	if (device_open (master_device, D_READ, "irq", &irq_dev))
+ 		err(2, "device_open irq");
+
++	/* Optional */
++	if (device_open (master_device, D_READ, "acpi", &acpi_dev)) {
++		MACH_PRINT("device_open acpi failed... continue\n");
++		acpi_dev = MACH_PORT_NULL;
++	}
++
+ 	pci_system_init ();
+ 	struct pci_device_iterator *dev_iter;
+ 	struct pci_device *pci_dev;
+@@ -363,6 +371,7 @@
+ rumpcomp_pci_irq_map(unsigned bus, unsigned dev, unsigned fun,
+ 	int intrline, unsigned cookie)
+ {
++	int ret;
+ 	struct irq *irq;
+ 	irq = malloc(sizeof(*irq));
+ 	if (irq == NULL)
+@@ -374,6 +383,15 @@
+ 	irq->fun = fun;
+ 	irq->intrline = intrline;
+
++	/* We can do better by reading irq from acpi device, but with fallback */
++	if (acpi_dev != MACH_PORT_NULL) {
++		ret = acpi_get_pci_irq (acpi_dev, bus, dev, fun, &irq->intrline);
++		if (ret) {
++			MACH_PRINT("acpi_get_pci_irq failed, continue with intrline\n");
++			irq->intrline = intrline;
++		}
++	}
++
+ 	pthread_mutex_lock(&genericmtx);
+ 	LIST_INSERT_HEAD(&irqs, irq, entries);
+ 	pthread_mutex_unlock(&genericmtx);

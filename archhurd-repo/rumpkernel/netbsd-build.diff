@@ -1,0 +1,190 @@
+--- a/netbsd/build.sh
++++ b/netbsd/build.sh
+@@ -2397,6 +2397,121 @@
+ 	statusmsg "Successful installworld to ${dir}"
+ }
+ 
++printoneconfig ()
++{
++
++	[ -z "${2}" ] || printf "%-5s %-18s: %s\n" "${1}" "${2}" "${3}"
++}
++
++WRAPPERBODY='int
++main(int argc, const char *argv[])
++{
++	int i, j, k;
++
++	for (i = 1; i < argc; i++) {
++		for (j = 0; j < sizeof(mngl_from)/sizeof(mngl_from[0]); j++) {
++			if (strcmp(argv[i], mngl_from[j]) == 0) {
++				if (strlen(mngl_to[j]) == 0) {
++					for (k = i; k < argc; k++) {
++						argv[k] = argv[k+1];
++					}
++					argv[k] = '\0';
++					argc--;
++				} else {
++					argv[i] = mngl_to[j];
++				}
++				break;
++			}
++		}
++	}
++'
++
++maketoolwrapper ()
++{
++
++	musthave=$1
++	tool=$2
++
++	if [ "${tool}" = "CC" ]; then
++		lctool=gcc
++	elif [ "${tool}" = "CXX" ]; then
++		lctool=g++
++	else
++		lctool=$(echo ${tool} | tr '[A-Z]' '[a-z]')
++	fi
++	fptool=$(command -v ${lctool})
++	if [ ! -x ${fptool} ]; then
++		if ! ${musthave}; then
++			return
++		else
++			bomb "Internal error: mandatory tool ${tool} not found"
++		fi
++	fi
++
++	eval ttool=\'\${${tool}}\'
++	tname=`${runcmd} "${makewrapper}" -V "${ttool}"`
++	printoneconfig 'Tool' "${fptool}" "${tname}"
++
++	# Mangle wrapper arguments from what NetBSD does to what the
++	# toolchain we use supports.  In case we need mangling, do it
++	# with a C wrapper to preserve all quoting etc. (couldn't
++	# figure out how to get that right with a shell.
++	rm -f ${TOOLDIR}/wrapper.c
++	exec 3>&1 1>${TOOLDIR}/wrapper.c
++	printf '#include <inttypes.h>\n'
++	printf '#include <string.h>\n'
++	printf '#include <unistd.h>\n\n'
++	printf 'static const char *mngl_from[] = {\n'
++	(
++		IFS=:
++		for xf in ${CCWRAPPER_MANGLE}; do
++			IFS=' '
++			set -- ${xf}
++			printf '\t"%s",\n' ${1}
++		done
++	)
++	printf '};\nstatic const char *mngl_to[] ={\n'
++	(
++		IFS=:
++		for xf in ${CCWRAPPER_MANGLE}; do
++			IFS=' '
++			set -- ${xf}
++			printf '\t"%s",\n' ${2:-}
++		done
++	)
++	printf '};\n\n'
++	( IFS=' ' printf '%s' "${WRAPPERBODY}" )
++	printf '\targv[0] = "%s";\n' ${fptool}
++	printf '\texecvp(argv[0], (void *)(uintptr_t)argv);\n'
++	printf '\treturn 0;\n}\n'
++	exec 1>&3 3>&-
++
++	${HOST_CC} ${TOOLDIR}/wrapper.c -o ${tname} \
++	    || bomb "failed to build wrapper for ${tool}"
++	rm -f ${TOOLDIR}/wrapper.c
++
++	chmod 755 ${tname}
++}
++
++makerumptools ()
++{
++	[ -n "${TOOLDIR}" ] || bomb "TOOLDIR not set"
++
++	# Create external toolchain wrappers.
++	mkdir -p ${TOOLDIR}/bin || bomb "cannot create ${TOOLDIR}/bin"
++	for x in CC AR NM OBJCOPY; do
++		maketoolwrapper true $x
++	done
++	for x in AS LD OBJDUMP RANLIB READELF SIZE STRINGS STRIP CXX; do
++		maketoolwrapper false $x
++	done
++
++	# create a cpp wrapper, but run it via cc -E
++	tname=`${runcmd} "${makewrapper}" -V '${CPP}'`
++	printf '#!/bin/sh\n\nexec %s -E -x c "${@}"\n' ${CC} > ${tname}
++	chmod 755 ${tname}
++}
++
+ # Run rump build&link tests.
+ #
+ # To make this feasible for running without having to install includes and
+@@ -2475,14 +2590,14 @@
+ 	# one little, two little, three little backslashes ...
+ 	md_quirks="$(echo ${md_quirks} | sed 's,\\,\\\\,g'";s/'//g" )"
+ 	${runcmd} cd "${TOP}" || bomb "cd to ${TOP} failed"
+-	tool_ld=`${runcmd} "${makewrapper}" -V '${LD}'`
++	tool_cc=`${runcmd} "${makewrapper}" -V '${CC}'`
+ 
+ 	local oIFS="${IFS}"
+ 	IFS=","
+ 	for set in ${RUMP_LIBSETS} ; do
+ 		IFS="${oIFS}"
+-		${runcmd} ${tool_ld} -nostdlib -L${DESTDIR}/usr/lib	\
+-		    -static --whole-archive ${set} --no-whole-archive -lpthread -lc 2>&1 -o /tmp/rumptest.$$ | \
++		${runcmd} ${tool_cc} -nostdlib -L${DESTDIR}/usr/lib 	\
++		    -static --whole-archive -lpthread -lc -lgcc ${set} 2>&1 -o /tmp/rumptest.$$ | \
+ 		      awk -v quirks="${md_quirks}" '
+ 			/undefined reference/ &&
+ 			    !/more undefined references.*follow/{
+@@ -2727,16 +2842,26 @@
+ 			;;
+ 
+ 		rump)
+-			make_in_dir . do-distrib-dirs
+-			make_in_dir . includes
+-			make_in_dir lib/csu dependall
+-			make_in_dir lib/csu install
+-			make_in_dir external/gpl3/gcc/lib/libgcc dependall
+-			make_in_dir external/gpl3/gcc/lib/libgcc install
++			if [ "${uname_s}" != "NetBSD" ] || \
++				[ "${uname_m}" != "${MACHINE}" ]; then
++				makerumptools
++				make_in_dir sys/rump includes
++				make_in_dir lib/librumpuser includes
++			else
++				make_in_dir . includes
++				make_in_dir lib/csu dependall
++				make_in_dir lib/csu install
++				make_in_dir external/gpl3/gcc/lib/libgcc dependall
++				make_in_dir external/gpl3/gcc/lib/libgcc install
++			fi
+ 			dorump "${op}"
+ 			;;
+ 
+ 		rumptest)
++			if [ "${uname_s}" != "NetBSD" ] || \
++				[ "${uname_m}" != "${MACHINE}" ]; then
++				makerumptools
++			fi
+ 			dorump "${op}"
+ 			;;
+ 
+--- a/netbsd/tools/Makefile
++++ b/netbsd/tools/Makefile
+@@ -102,10 +102,10 @@
+ .if ${TOOLS_BUILDRUMP} == "no"
+ SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \
+ 		${LINT_BITS} \
+-		makewhatis mtree nbperf .WAIT uudecode
++		makewhatis nbperf .WAIT uudecode
+ .endif
+ 
+-SUBDIR+= cat gzip rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
++SUBDIR+= mtree cat rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
+ .if ${TOOLS_BUILDRUMP} == "no"
+ SUBDIR+= xz-include .WAIT grep xz-lib pax .WAIT libprop
+ 

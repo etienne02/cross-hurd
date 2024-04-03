@@ -1,0 +1,47 @@
+# Maintainer: Arch Hurd Team
+
+pkgname=netdde
+pkgver=20250404
+_commit=c0ef248dc7c5ccc1273e2a796f3ece30c5b645df
+pkgrel=1
+pkgdesc="Linux drivers from 2.6.32.59 for userland"
+arch=(x86_64)
+url="https://www.gnu.org/software/hurd/dde.html"
+license=('GPL')
+depends=('gnumach' 'hurd')
+makedepends=('coreutils')
+source=("git+https://git.savannah.gnu.org/git/hurd/incubator.git#commit=$_commit"
+        "crypt.patch"
+        "csum.patch"
+        "machdev.patch")
+sha256sums=('SKIP'
+    'SKIP'
+    'SKIP'
+    'SKIP')
+validpgpkeys=()
+
+prepare() {
+    cd incubator
+    patch -p1 -i "$srcdir/crypt.patch"
+    patch -p1 -i "$srcdir/csum.patch"
+    patch -p1 -i "$srcdir/machdev.patch"
+}
+
+build() {
+    cd incubator
+    make convert
+    rm -f Makefile.inc
+    make ARCH=amd64 TARGET=netdde LINK_PROGRAM="gcc" CC="gcc"
+    rm -f Makefile.inc
+    make ARCH=amd64 TARGET=netdde.static LINK_PROGRAM="gcc -static" CC="gcc"
+}
+
+package() {
+    cd incubator
+    install -d $pkgdir/hurd
+    install -Dm 755 netdde $pkgdir/hurd/
+    install -Dm 755 netdde.static $pkgdir/hurd/
+
+    mkdir -p "$pkgdir"/usr/share/doc/$pkgname
+    find dde -name "*.o" | sed -e 's|^dde/||' > "$pkgdir"/usr/share/doc/$pkgname/driver_list
+}

@@ -1,0 +1,75 @@
+Index: rumpkernel/pci-userspace/src-gnu/Makefile.inc
+===================================================================
+--- rumpkernel.orig/pci-userspace/src-gnu/Makefile.inc
++++ rumpkernel/pci-userspace/src-gnu/Makefile.inc
+@@ -3,13 +3,21 @@
+ PCIDIR:=	${.PARSEDIR}
+ .PATH:		${PCIDIR}
+ 
+-RUMPCOMP_USER_SRCS=	pci_user-gnu.c mach_debugUser.c acpiUser.c
++RUMPCOMP_USER_SRCS=	pci_user-gnu.c gnumachUser.c mach_debugUser.c acpiUser.c
+ RUMPCOMP_USER_CPPFLAGS+=-I${PCIDIR} -I${DESTDIR}/usr/include
+ RUMPCOMP_CPPFLAGS+=	-I${PCIDIR} -I${DESTDIR}/usr/include
+ CPPFLAGS+=		-I${PCIDIR}
+ LDFLAGS+= -lmachuser -Wl,--no-as-needed -lpciaccess -Wl,--as-needed
+ MIG=mig
+ 
++gnumachUser.c:
++	echo '#include <mach/gnumach.defs>' \
++		| ${CC} -E -x c - -o - \
++		| $(MIG) -cc cat - /dev/null -subrprefix __ \
++			-user gnumachUser.c \
++			-server /dev/null \
++			-header gnumach_U.h
++
+ mach_debugUser.c:
+ 	echo '#include <mach_debug/mach_debug.defs>' \
+ 		| ${CC} -E -x c - -o - \
+Index: rumpkernel/pci-userspace/src-gnu/pci_user-gnu.c
+===================================================================
+--- rumpkernel.orig/pci-userspace/src-gnu/pci_user-gnu.c
++++ rumpkernel/pci-userspace/src-gnu/pci_user-gnu.c
+@@ -67,7 +67,7 @@
+ #include "pci_user.h"
+ #include <device/notify.h>
+ #include <device/device.h>
+-#include <mach/gnumach.h>
++#include "gnumach_U.h"
+ #include "mach_debug_U.h"
+ #include "acpi_U.h"
+ #include <mach/vm_param.h>
+@@ -541,13 +541,32 @@ rumpcomp_pci_virt_to_mach(void *virt)
+ 	unsigned long long paddr=0;
+ 	kern_return_t ret;
+ 	vm_address_t vaddr = (vm_address_t)virt;
++	mach_port_t tp;
++
++	tp = mach_task_self();
++
++	rpc_phys_addr_t phys_addr = 0, *paddrp = &phys_addr;
++	mach_msg_type_number_t count = 1;
++
++	ret = vm_pages_phys (master_host, tp, vaddr & ~(PAGE_SIZE-1), PAGE_SIZE, &paddrp, &count);
++	if (ret == KERN_SUCCESS)
++	{
++		if (paddrp != &phys_addr)
++		{
++			phys_addr = *paddrp;
++			vm_deallocate (tp, (vm_offset_t) paddrp, count * sizeof(*paddrp));
++		}
++		return phys_addr + (vaddr & (PAGE_SIZE-1));
++	}
++
++	/* Fallback to old slow RPC  */
++
+ 	vm_region_info_t region;
+-	mach_port_t tp, object;
++	mach_port_t object;
+ 	vm_page_phys_info_array_t pages_phys;
+ 	vm_page_info_array_t pages;
+ 	mach_msg_type_number_t pagesCnt=0;
+ 
+-	tp = mach_task_self();
+ 	ret = mach_vm_region_info(tp, vaddr, &region, &object);
+ 	if (KERN_SUCCESS != ret) {
+ 		errno = ret;

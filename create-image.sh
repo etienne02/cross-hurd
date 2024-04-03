@@ -5,7 +5,7 @@
 LOOP=$(sudo losetup -f)
 LOOPPART="${LOOP}p1"
 IMG=hd.img
-IMG_SIZE=10GB
+IMG_SIZE=65GB
 BASE_SYS_ROOT=$(basename $SYS_ROOT)
 
 create_image() {
@@ -43,6 +43,7 @@ copy_files() {
     install -d -m700 mount/var/lib/sshd &&
     mkdir -p mount/servers/{socket,bus} &&
     cp -R files/etc/* mount/etc/ &&
+    cp -R files/bin/* mount/bin/ &&
     mkdir -p mount/etc/hurd &&
     cp files/runsystem.hurd mount/libexec/ &&
     chmod ogu+x mount/libexec/runsystem.hurd &&
@@ -52,6 +53,7 @@ copy_files() {
     mkdir -p mount/servers &&
     touch mount/servers/{acpi,exec,crash-kill,default-pager,password,socket,startup,proc,auth,symlink} &&
     mkdir mount/tmp && chmod 01777 mount/tmp &&
+	touch mount/etc/arch-release && #  This is for cmake to detect it is an arch based OS
     cp -R $SYSTEM/$BASE_SYS_ROOT/hurd/* mount/hurd/ &&
     cp -R $SYSTEM/$BASE_SYS_ROOT/dev/* mount/dev/ &&
     cp -R $SYSTEM/$BASE_SYS_ROOT/include/* mount/include/ &&
@@ -80,6 +82,21 @@ copy_files() {
     echo "Cross-compiled from a $HOST on $(date)" >>mount/etc/motd &&
     # Ensure all files are owned by root inside the system image.
     sudo chown root:root -R mount/*
+
+
+    sudo mkdir -p mount/share/hurd &&
+    sudo mkdir -p mount/lib/locale &&
+    sudo cp -R /usr/share/X11/locale mount/share/X11 &&  # HACK HACK HACK to have compose working
+    sudo ln -svf /bin/gcc mount/bin/cc &&
+    sudo ln -svf /bin/${CROSS_HURD_TARGET}-mig mount/bin/mig &&
+    sudo ln -svf /bin/ar mount/bin/${CROSS_HURD_TARGET}-ar &&
+    sudo ln -svf /bin mount/usr/bin &&
+    sudo ln -svf /sbin mount/usr/sbin &&
+    sudo ln -svf /share mount/usr/share &&
+    sudo ln -svf /include mount/usr/include &&
+    sudo ln -svf /lib mount/usr/lib &&
+    sudo ln -svf /proc/mounts mount/var/run/mtab &&
+    sudo cp $CROSS_TOOLS/lib/gcc/${CROSS_HURD_TARGET}/${GCC_VERSION}/include/limits.h mount/lib/gcc/${CROSS_HURD_TARGET}/${GCC_VERSION}/include/limits.h  # HACK to have limits.h in the machine
 }
 
 install_grub() {
@@ -100,6 +117,56 @@ qemu_arch() {
   else
     echo "x86_64"
   fi
+}
+
+post_install () {
+    #sudo cp -RL src/$HURD_SRC mount/root &&
+    sudo cp -RL src/$GNUMIG_SRC mount/root &&
+    sudo cp -R src/$AUTOCONF_SRC mount/root &&
+    sudo cp -R src/$AUTOMAKE_SRC mount/root &&
+    sudo cp -R src/$BASH_SRC mount/root &&
+    sudo cp -R src/$AUTOCONF_ARCHIVE_SRC mount/root &&
+    sudo cp -R src/$GZIP_SRC mount/root &&
+    sudo cp -R src/$GETTEXT_SRC mount/root &&
+    sudo cp -R src/$BISON_SRC mount/root &&
+    sudo cp -R src/$PKGCONF_SRC mount/root &&
+    sudo cp -R src/$MPDECIMAL_SRC mount/root &&
+    sudo cp -R src/$PYTHON_SRC mount/root &&
+    sudo cp -RL src/$PYTHON_BOOTSTRAP_SRC mount/root &&
+    sudo cp -R src/$PYTHON_SIX_SRC mount/root &&
+    sudo cp -R src/$PYTHON_PASSLIB_SRC mount/root &&
+    sudo cp -RL src/$LIBXSLT_SRC mount/root &&
+    sudo cp -R src/$MERCURIAL_SRC mount/root &&
+    sudo cp -R src/$LIBARCHIVE_SRC mount/root &&
+    sudo cp -R src/$NINJA_SRC mount/root &&
+    sudo cp -RL src/$GYP_SRC mount/root &&
+    sudo cp -R src/$ZSTD_SRC mount/root &&
+    sudo cp -R src/$EXPAT_SRC mount/root &&
+    sudo cp -R src/$NPTH_SRC mount/root &&
+    sudo cp -R src/$GNUPG_SRC mount/root &&
+    sudo cp -R src/$JSONCPP_SRC mount/root &&
+    sudo cp -R src/$TCL_SRC mount/root &&
+    sudo cp -R src/$SQLITE_SRC mount/root &&
+    sudo cp -R src/$CMAKE_SRC mount/root &&
+    sudo cp -R src/$PERL_INC_LATEST_SRC mount/root &&
+    sudo cp -R src/$PERL_POD_PARSER_SRC mount/root &&
+    sudo cp -R src/$PERL_BUILD_SRC mount/root &&
+    sudo cp -R src/$LIBXKBCOMMON_SRC mount/root &&
+    sudo cp -R src/$XKEYBOARD_CONFIG_SRC mount/root &&
+    sudo cp -R src/$PACMAN_SRC mount/root &&
+    sudo cp -R src/$SUDO_SRC mount/root &&
+
+    sudo cp package-versions.sh mount/root/ &&
+    sudo cp package-vars.sh mount/root/ &&
+    sudo cp step1.sh mount/root/ &&
+    sudo chown root:root -R mount/root/* &&
+    sudo chmod u+x mount/root/step1.sh
+
+    sudo mkdir -p mount/opt/meson &&
+    sudo cp -R src/$MESON_SRC/* mount/opt/meson &&
+
+    sudo mkdir -p mount/home/aur &&
+    sudo chown 1001:1001 mount/home/aur
 }
 
 qemu_net() {
@@ -129,6 +196,7 @@ generate_ssh_host_keys &&
   mount_image &&
   copy_files &&
   install_grub &&
+  post_install &&
   print_info "Disk image available on $IMG" &&
   print_info "Run the following command to boot the image:" &&
   echo "    qemu-system-$(qemu_arch) --enable-kvm -m 4G -drive cache=writeback,file=$IMG -M q35 $(qemu_net)" &&

@@ -1,0 +1,32 @@
+pkgbase = cmake
+	pkgdesc = A cross-platform open-source make system
+	pkgver = 4.0.3
+	pkgrel = 1
+	url = https://www.cmake.org/
+	arch = x86_64
+	license = custom
+	makedepends = emacs
+	makedepends = git
+	makedepends = nlohmann-json
+	makedepends = python-sphinx
+	makedepends = qt6-base
+	depends = cppdap
+	depends = curl
+	depends = expat
+	depends = gcc-libs
+	depends = glibc
+	depends = hicolor-icon-theme
+	depends = jsoncpp
+	depends = libarchive
+	depends = libuv
+	depends = ncurses
+	depends = rhash
+	depends = zlib
+	optdepends = make: for unix Makefile generator
+	optdepends = ninja: for ninja generator
+	optdepends = qt6-base: cmake-gui
+	source = git+https://gitlab.kitware.com/cmake/cmake.git#tag=v4.0.3?signed
+	validpgpkeys = CBA23971357C2E6590D9EFD3EC8FEF3A7BFB4EDA
+	sha512sums = 19bbc12717eecf60225c085e1c5bd7cfb22ef52e939584ee912eb6f685bdeadff5eb320c1b267a167c8fee6323955f24df3eb27bbb728a25fbb86b71f0b2b6d3
+
+pkgname = cmake

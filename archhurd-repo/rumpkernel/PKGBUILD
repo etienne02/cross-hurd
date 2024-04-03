@@ -1,0 +1,361 @@
+# Maintainer: Etienne Brateau <etienne (dot) brateau (at) gmail (dot) com>
+
+pkgname=(
+  'librump'
+  'librumpfs'
+  'librumpnet'
+  librumpdev-{audio,disk,if,pci,usb}
+)
+pkgbase=rumpkernel
+pkgver=2025.01.07
+_bsd_commit=0896a89cec2a8df05d7129d749231fe1712b0ad7 
+_pci_userspace_commit=585b43e59251d276070997f63024b225f344c6ab
+pkgrel=1
+pkgdesc="The drivers kernel provided by RumpKernels"
+arch=(x86_64)
+url="https://www.netbsd.org/"
+license=('BSD-2-clause')
+depends=('glibc')
+makedepends=('mig')
+source=("netbsd::git+https://github.com/NetBSD/src#commit=$_bsd_commit"
+  "git+https://github.com/$pkgbase/pci-userspace#commit=$_pci_userspace_commit"
+  'PAE'
+  'acpi.diff'
+  'ahcisata-rump.diff'
+  'ata-rump.diff'
+  'busspaceunmap-rump.diff'
+  'clean_external'
+  'clean_libpci'
+  'crossbuild'
+  'dealloc.diff'
+  'err'
+  'gnumach-update'
+  'hci_shared_intr'
+  'idtype_t.diff'
+  'linux'
+  'machirqdev.diff'
+  'memory-range.diff'
+  'netbsd-build.diff'
+  'non-fhs-shell'
+  'no-virtio-rump.diff'
+  'path_max.diff'
+  'pci-userspace-rump.diff'
+  'piixide-rump.diff'
+  'ps-comm.diff'
+  'random'
+  'rumpuser-evcnt.diff'
+  'rumpuser-rng-debug.diff'
+  'vm_allocate_contiguous_align'
+  'vm_pages_phys.diff'
+)
+sha512sums=('SKIP'
+  'SKIP'
+  'e4b8877d6a4e92712e4532632d23b5d97c2eeba67420f2950ad845ecbde50dd263ae105d29de500def77cca5f7b805ead5fd0f40cae798d45b1016b75550d9a0'
+  '3335de1042dddac9d381680168b07cd1608e4e33904a2c4d5d927c39375752185de5209334c4ce8d441f8567f0e404ca0e5e7ca294c78718281610a0b0e58aef'
+  'f8950b0aefa6e391bbfdb0da408bcf3022b87656598f2d0acbb31330eec6af6e2bec38def8d618924b0d2bb983a4a56426cff45fefc6dfaf8da2a39f155a9970'
+  'fa25fab03f7756a67a219182eb455e18197c2f7960eec4a99dac48eaa2384c8b9ed2618910407074ae8e0b1f39ffa4ad0bdb3ee3297c83c172edca75c99ae3e1'
+  '597491f5364e84077f9acf6b6433d3071259f76b8332c9a5e47d275860f961ac39939669b4a3850f3f0d309f6c3fce2247aa71b48d0ed6c5f813ccb55c9c6f0f'
+  '86567da3be5abfacbb6955082ae634ed7790a1079e64c5519fefae6b4830e32ee8693204ff1e46b8a81b0465f6f189ef6235e587981323e64154e32dd216ef4f'
+  '6283852c21157531744a5bc9da4b31ff407a61005c9dd129caebceee2afed7a939d6c2171c77d851d0aa6d07cc98f0b73c214c22402b172666091c7b4bb00bcc'
+  '61e46d8660d21e68bde0b731dc37fa340d37730faa760c1b1e37ad1ab5e04557b1270783e6c7a7dfe8a738820bee173dcc89c3bcc9ef85c3403576f83973447c'
+  'f74c2a57a639552641320fda94cd11ab304e45ae778afc8c3bf80dac053c8f04459841721c9f00ba86abb2f7b791cf980652b568a34e8d226ae5566800f58757'
+  'b04055a6ec08c2bbafb96cacf55b4ba6649070fa3d4cbff7fa6f6440bec523ed9a33465cb83aa0bd06f9322b3d0847f932e553ec7a447b4fc7ef2d2593aa0fba'
+  '031f843b08340c712cfc24fbad6d74764742ab346fe7960cc6b00f4194d7de4deed160e2fc355b3ad4a15b58d505ca24ebf6860e7cad95db07460c811d2019ea'
+  '23494731bbbfc7b5a0d66cb1a402352d6c9a69f1f77b874aa4f0f6477e6bcd867cc34054bc61ab6eb2dca2bd64a6627f59bfdd2bb76948dec5cac841b0a75b45'
+  'ea15b93e382bbd0113867f20874383c372e4a279523ba555166cc7b8073d20497830fd8b49bd0d48b336e5f0cd335047ca54c90cb9546655bb66ce27bb13aea6'
+  'a51391460f1fc2f4ac6b8eb38a6bb8c8998a364778f487419aec08d8ef68ba032113b1e5861a3c208181d421447111a5e7f4e6593b3ec40519d6dc09e8212076'
+  '5e16cac08297168b87e6a3573a7a8b9896e938dae77604b490788e9e527633bc7fafdbe12ab830048b657ef4c0b0902ab7cca3cb9be411436835bc72cd40fa54'
+  '3cf73509c0d4604c7695d3e2bda36c9d8936fc1dea2ec0c63952bec378652aa28e61c19e12b10a32d5e14d7459525c913219e4854b7dff6238ee3c9b28e7a7b2'
+  'ef3bfd5edefc28bbc8945ebf87bd38393153486561ce16ff2c24c4c2fa70090d12c0dce41830f97ac32c0fde0241478f4d308b5049148d760eaaff9bf8a51bd3'
+  'a1b61c7b1e7981d91820420c9c9abd5039167a3b3914a90410425b9f68a56861b1567f2d0cd306b4140b31577b7097194c089484be7dd43c9e38e31811d9e259'
+  '0272a62b4ebbcddb59ac121bc37cf9a03e4cf72724534033180421edf144eb17128db9825ad43e86910434a5b38a8e7be88da8db0d89385b33db5cebbbdcf9f1'
+  '8792a8151c9aeda84a098f937e5fdadf41bcbf1ad09198a71ff867befcc495e04c5d11d6b2db5db01c6e4e0fe54dd7a6ca23410235218d6a37866a3083090b7a'
+  '222e57ed88e063d66a3ebb92b5dfa56c38945f3482ec0b6f5d912c4de7a8eab7de4c6961653271db4c60d9d77ff9dc85909f55b07024a948c6e7c8ce12dbb2cd'
+  '6ecf5ec8d27f9cc8b23e9595b5d8d2eb595b13da202b76430680af08f7a5cea4fa8f6d5510c004ff5fa081be70efbc4b940082cff1cd1848707fa3168c185329'
+  'a3efffe1faa6cb6b7b1cb6d2e1177006f80547be0dfaea8a6a800089393428e298cf3340898154aa95aff9428c9f33c36186ea67d5558e9a593ce4c3be284b4e'
+  'd06ee58b6b893b45fed5e24dcde627f3796944af7e6ac0047fce7b9b0d58b910176c77575811e9e35c8f2dd24e1524437c1c934a8dd2df1d88446c595c285175'
+  '3e555e6ea9584a9512670d4236e7fa4193d587d1040bd83a890a1e8cdbd23edf7eaf75fa9aac11c227bfc91f9888b78bcb9467fafcb4340c527ad9ffef030489'
+  'e0214c0d9f84bf310a68333de6294b73bfd72d7f964179cc6f29b30978ec013470a8e18443c0c74acd6d54410d5fc8d15b43eb07340a67c82932250dd55c198b'
+  '491f557f9280f2ff7b14f855772b0aff22b31a3e160b7b901bd3d9e2688231298a646998ce751999a06d922f947c006a989697a7b9cb760d46fbb75d25233bcf'
+  'd2a47732e8a94a0dfdcb1e332d682a9f7113ecd1a10f614e8593b227813f37ca4fa3d81dca4b1cd6eb1e1512443700948397715fbf64d53ca2511d115a9dd341'
+  'SKIP'
+  'SKIP'
+)
+b2sums=('SKIP'
+  'SKIP'
+  '70595e0be03bf5774d39524b66fc520a173169ab1f9b9025d786ad2b46a08727c6eb05626197b5aa4bd61c49fe4ef92766b0c0b57c9a3d6ef7a824dd9eadd767'
+  '0977ccc2c52d109e6c0bbd2c41964aefd9a951b16da01344b07b9629af227a4bb88e990fbcfb036866253bb623631f33b9f512cb30de0b2018c65b74591ef190'
+  '4278375c1cc63a3cdf2486d6f20a4c5f88679716279f3dde4991bb146c0995ec0b7346cfba07ec831845f51d5be3c0d1e8e164d779187123df11d34afe38c4c3'
+  'b93dfe0da26cc67e772e13215dc5e18b2eefc4130ce424a7a3d2fc11edf73e5d46b036e8ee643a184ebe753a602860e96ae9344a56b5ee6b3dcad4bf43d71b29'
+  '100548f3d82d903c8ed368f726ef27693d6220690ff562ddc3790757328cd48aa72a92968db93852604e973378f3e0df8ae53d34e60a88772f1d5d7f766d30ab'
+  'e53492f22d187f87f7129cec78d6a2f039f9041c657c41e897026d80edf779bf072316224073ffd1eb4e9a0a81f56e457730f505ffd54a19501d8a8024464468'
+  '1df3da69509def01092da88ef75784a23ff432fd8fdee0a5f8545a7c8f5bd028a8b03a6ea7ca2274154881310152803789c179fe1ba0cff63ca0c583cdd2614c'
+  '65ba74de5f81761b680984b9d6289bc8fe17d7a31624173ca1b922715ae1b1aea17c9ad36e9d245b44d9f8959a92d69bbfc6024e066bcf3a8e98a9cec9d75ea1'
+  'b0560cd534ad28b69eedf9ce94d610836cbb4763bda1ba9b4ebcc595d7539f7ee473b24e78bdac2804d0b5433fc6424c715111556c4621d8f3493ce25d6bea75'
+  '27e0c9549f9515b31e7e0d5d20daa68e92b28506a3aaa02a1fb03a1d5e286c744b727423823938c0cf463ffd29b260039c788855ed68c93c8260201203d7aba1'
+  'a91eecce1e039af5602a191778fcc5d7196e2df483ac66dbf4b2abc02d51165df3cbc11389b748d692244b4a64be6c06fd7ab250bdfaa1910b4c1056a1fac90e'
+  'f4eb70cf1312174cf1423cd65d3a594828e6ffee7adfd206df4b88d3fa487639c08fcfd4648ebcf229537019f3e5ec7409923afb9d4d07b50a12a3035941cde2'
+  'c8ab36ec80326be4471942d979507647254f5549ff65a169961536e0c5a0b959277831b1bebf71fdd159c0afdded5b157656bc5ad3cf4091f96f16110fc3e4fa'
+  '1e3cf52fcf127b5e380a5287dafe5918b55843628753815fc455d2393ff999414227fe6b59efaacc882a91a61a7528c2bd932df6e9c9cdfda66e3840b9e13eb8'
+  '7756b74bb413de6b33d86bdc0c4a0eb5251f0930b0cccab4cbadd54f662c508f404131df9f06be6ea84066603d232c9458611d3724ce2080579e3cd3d5910036'
+  '51bc680259b45bb4e6a9208907cea2a9cc9467319c66bdeff3471aa02cd9edbd256dd726a78086058a0ddca8d4b2deb4aea46291f187e978baa0edc35af16287'
+  '1cce15945363362d3d885cd5742d509eed51a9ec53acd5478674ea71cf9ab4e009ba9e2cc35add0d1312205cf6dd43e1c9f5f25f86c65953f4184c139248ff9d'
+  '3a87a65ee3fed9405ae1e0bea4c8722f8e02eb4580346db7c7c2a29fd60e77b996db80b4e3fd4a43c4bc835deb37a0da0f353881f22121f6a6432f7031b61a3e'
+  '73de2324b226a1011f4c2e4cbfc47248ad942b01622bdb768963069522c3e810ecfe43b6f85bc47f36fab0f896c23fa04b3820ac337e8731fc096a21409db6e9'
+  '70660021998a32137111d74647968f7611e34cded771d005771e1494cdb9f65797d5ef3dd111ab4f5033960559087b7fa58a102f8e5db21716af8997e5fa6fe9'
+  'ad17f2b8128f133e7f7616d940ff2a3dacee45f07c69e64a8730364ef5961cd1d96cd9a813c043d8dd32730be6a2855ad7ac7337e5655b6c1a01a6d8c79ed3bc'
+  '8e0c7cd1345d7fab1728e311bf0d0bf89083804f9b2ecf711b534d24f1013e35634be163ba298e1341995baaf092431fe163b945a4b9fe01df14f6ec3c5bc94d'
+  '77d64b2fcd1b67fc4e24769ee9a750f7dc26c259a2efcebae98593bc0f715000be1f1bf97b11012c69472022dba69597f06a4484979b92ab8878560b201e553c'
+  'f107e148e7dc5864075314d53e8bbf888b2830d82748dd8a7c3c7844c3d0104e92d4fb8997a421b2fb8e9789200af4cdf0b67026e4f242d7429fdd9d80877237'
+  'b9b6a520e4f60261a8dc12157b7503f60aa0457c4d8dad82ec2edd0cfd35be418c3152da8006f54dd65236d85a4378c63ef3fac0175ef23e460cb3a86431db0e'
+  '19c70aa26bfa58fb54ecc475b57997f3073428d237706376c419b3d82c3227a0e04ed528a265a4bcce359a9f9ada07a116458d7c84cddb49ed5f10895a481af3'
+  '674bcb05ad262771c9ef6230cdcc6e211b2ae43d64e8de0a210d7eca64bc2cdaf6b04b9c57f5027bab8429d082de4ec51b277332a400faa627ac95e2ef428613'
+  'SKIP'
+  'SKIP'
+)
+validpgpkeys=()
+
+prepare() {
+  cd "$srcdir"
+  patch -p1 -i "../path_max.diff"
+  patch -p1 -i "../ata-rump.diff"
+  patch -p1 -i "../piixide-rump.diff"
+  patch -p1 -i "../ahcisata-rump.diff"
+  patch -p1 -i "../busspaceunmap-rump.diff"
+  patch -p1 -i "../memory-range.diff"
+  patch -p1 -i "../gnumach-update"
+  patch -p1 -i "../rumpuser-rng-debug.diff"
+  patch -p1 -i "../machirqdev.diff"
+  patch -p1 -i "../dealloc.diff"
+  patch -p1 -i "../netbsd-build.diff"
+  patch -p1 -i "../no-virtio-rump.diff"
+  patch -p1 -i "../pci-userspace-rump.diff"
+  patch -p1 -i "../rumpuser-evcnt.diff"
+  patch -p1 -i "../ps-comm.diff"
+  patch -p1 -i "../idtype_t.diff"
+  patch -p1 -i "../acpi.diff"
+  patch -p1 -i "../linux"
+  patch -p1 -i "../crossbuild"
+  patch -p1 -i "../clean_libpci"
+  patch -p1 -i "../random"
+  patch -p1 -i "../non-fhs-shell"
+  patch -p1 -i "../clean_external"
+  patch -p1 -i "../PAE"
+  patch -p1 -i "../vm_allocate_contiguous_align"
+  patch -p1 -i "../err"
+  patch -p1 -i "../vm_pages_phys.diff"
+  patch -p1 -i "../refactor-irq"
+  patch -p1 -i "../rump_bus_dma"
+
+  mkdir $srcdir/obj
+}
+
+build() {
+  cd $srcdir/netbsd/lib/librumpuser
+  ./configure --prefix=/usr
+
+  cd $srcdir/netbsd
+  CFLAGS="-Wno-format-security -Wno-omit-frame-pointer" \
+    HOST_CC=gcc HOST_CPPFLAGS=-D_GNU_SOURCE TARGET_CC=gcc TARGET_CXX=gcc \
+    TARGET_LD=ld TARGET_MIG=mig \
+    TARGET_LDADD="-B/usr/lib -L/usr/lib -L/usr/lib" \
+    _GCC_CRTENDS= _GCC_CRTEND= _CC_CRTBEGINS= \
+    _GCC_CRTBEGIN= _GCC_CRTI= _GCC_CRTN= \
+    BSDOBJECTDIR=$srcdir/obj \
+    ./build.sh \
+    -V TOOLS_BUILDRUMP=yes \
+    -V MKBINUTILS=no -V MKGDB=no -V MKGROFF=no \
+    -V MKDTRACE=no -V MKZFS=no -V MKPICINSTALL=yes \
+    -V TOPRUMP=$srcdir/netbsd/sys/rump \
+    -V BUILDRUMP_CPPFLAGS="-Wno-error=stringop-overread -Wno-error=sign-compare" \
+    -V RUMPUSER_EXTERNAL_DPLIBS=pthread \
+    -V CPPFLAGS="-I$srcdir/obj/destdir/usr/include -D_FILE_OFFSET_BITS=64 -DRUMP_REGISTER_T=int -DRUMPUSER_CONFIG=yes -DNO_PCI_MSI_MSIX=yes -DNUSB_DMA=1 -DPAE -DBUFPAGES=16" \
+    -V CWARNFLAGS="-Wno-error=maybe-uninitialized -Wno-error=address-of-packed-member -Wno-error=unused-variable -Wno-error=stack-protector -Wno-error=array-parameter -Wno-error=array-bounds -Wno-error=stringop-overflow -Wno-error=int-to-pointer-cast -Wno-error=incompatible-pointer-types" \
+    -V LIBCRTBEGIN=" " -V LIBCRTEND=" " -V LIBCRT0=" " -V LIBCRTI=" " \
+    -V MIG=mig \
+    -V DESTDIR=$srcdir/obj/destdir \
+    -V _GCC_CRTENDS=" " -V _GCC_CRTEND=" " \
+    -V _GCC_CRTBEGINS=" " -V _GCC_CRTBEGIN=" " \
+    -V _GCC_CRTI=" " -V _GCC_CRTN=" " \
+    -V TARGET_LDADD="-B/usr/lib -L/usr/lib -L/usr/lib" \
+    -U -u -T $srcdir/obj/tooldir -m amd64 tools rump
+
+  cd $srcdir/netbsd/lib/librumpuser
+  _SRC_TOP_=$srcdir/netbsd/ MKUNPRIVED=yes \
+    RUMPRUN=true DESTDIR=$srcdir/obj/destdir MKPICINSTALL=yes \
+    $srcdir/obj/tooldir/bin/nbmake-amd64 dependall install
+
+  # XXX we need to do it twice to have the lib being effectivelly installed in the obj/destdir folder
+  cd $srcdir/netbsd/lib/librumpuser
+  _SRC_TOP_=$srcdir/netbsd/ MKUNPRIVED=yes \
+    RUMPRUN=true DESTDIR=$srcdir/obj/destdir MKPICINSTALL=yes \
+    $srcdir/obj/tooldir/bin/nbmake-amd64 dependall install
+
+  cd $srcdir/pci-userspace/src-gnu
+  _SRC_TOP_=$srcdir/netbsd/ MKUNPRIVED=yes \
+    DESTDIR=$srcdir/obj/destdir MKPICINSTALL=yes \
+    $srcdir/obj/tooldir/bin/nbmake-amd64 dependall install
+}
+
+_pick() {
+  local p="$1" soname_extension=${2:-0.0}
+  install -vDm 755 obj/destdir/usr/lib/${p}.a $pkgdir/usr/lib
+  install -vDm 755 obj/destdir/usr/lib/${p}_p.a $pkgdir/usr/lib
+  install -vDm 755 obj/destdir/usr/lib/${p}_pic.a $pkgdir/usr/lib
+  install -vDm 755 obj/destdir/usr/lib/${p}.so.$soname_extension $pkgdir/usr/lib
+  ln -s ${p}.so.$soname_extension "$pkgdir"/usr/lib/${p}.so.0
+  ln -s ${p}.so.$soname_extension "$pkgdir"/usr/lib/${p}.so
+}
+
+package_librump() {
+  pkgdesc="Rump core libraries"
+
+  mkdir -vp $pkgdir/usr/include/rump
+  mkdir -vp $pkgdir/usr/lib/
+
+  # Install include files
+  install -vDm 644 obj/destdir/usr/include/rump/* $pkgdir/usr/include/rump/
+
+  # Install libraries
+  _pick librump
+  _pick librumpdev
+  _pick librumpuser 0.1
+  _pick librumpvfs
+}
+
+package_librumpfs() {
+  pkgdesc="Rump filesystem libraries"
+  depends=(librump=$pkgver-$pkgrel)
+
+  mkdir -vp $pkgdir/usr/lib/
+
+  # Install libraries
+  _pick librumpfs_cd9660
+  _pick librumpfs_efs
+  _pick librumpfs_ext2fs
+  _pick librumpfs_fdesc
+  _pick librumpfs_ffs
+  _pick librumpfs_hfs
+  _pick librumpfs_kernfs
+  _pick librumpfs_lfs
+  _pick librumpfs_mfs
+  _pick librumpfs_msdos
+  _pick librumpfs_nfs
+  _pick librumpfs_nfsserver
+  _pick librumpfs_nilfs
+  _pick librumpfs_ntfs
+  _pick librumpfs_null
+  _pick librumpfs_ptyfs
+  _pick librumpfs_syspuffs
+  _pick librumpfs_sysvbfs
+  _pick librumpfs_tmpfs
+  _pick librumpfs_udf
+  _pick librumpfs_umap
+  _pick librumpfs_union
+  _pick librumpfs_v7fs
+}
+
+package_librumpnet() {
+  pkgdesc="Rump network libraries"
+  depends=(librump=$pkgver-$pkgrel)
+
+  mkdir -vp $pkgdir/usr/lib/
+
+  # Install libraries
+  _pick librumpnet
+  _pick librumpnet_agr
+  _pick librumpnet_altq
+  _pick librumpnet_bpfjit
+  _pick librumpnet_bridge
+  _pick librumpnet_gif
+  _pick librumpnet_ipsec
+  _pick librumpnet_l2tp
+  _pick librumpnet_lagg
+  _pick librumpnet_local
+  _pick librumpnet_net
+  _pick librumpnet_net80211
+  _pick librumpnet_netbt
+  _pick librumpnet_netcan
+  _pick librumpnet_netinet
+  _pick librumpnet_netinet6
+  _pick librumpnet_netipsec
+  _pick librumpnet_netmpls
+  _pick librumpnet_npf
+  _pick librumpnet_pppoe
+  _pick librumpnet_shmif
+  _pick librumpnet_sockin
+  _pick librumpnet_tap
+  _pick librumpnet_tun
+  _pick librumpnet_vether
+  _pick librumpnet_virtif
+  _pick librumpnet_vlan
+  _pick librumpnet_wg
+}
+
+package_librumpdev-pci() {
+  pkgdesc="Rump pci device libraries"
+  depends=(librump=$pkgver-$pkgrel)
+
+  mkdir -vp $pkgdir/usr/lib/
+
+  # Install libraries
+  _pick librumpdev_pci
+}
+
+package_librumpdev-audio() {
+  pkgdesc="Rump audio device libraries"
+  depends=(librump=$pkgver-$pkgrel librumpdev-pci=$pkgver-$pkgrel)
+
+  mkdir -vp $pkgdir/usr/lib/
+
+  # Install libraries
+  _pick librumpdev_audio
+  _pick librumpdev_audio_ac97
+  _pick librumpdev_pci_auich
+  _pick librumpdev_pci_hdaudio
+  _pick librumpdev_hdaudio_hdafg
+  _pick librumpdev_pci_eap
+}
+
+package_librumpdev-disk() {
+  pkgdesc="Rump disk device libraries"
+  depends=(librump=$pkgver-$pkgrel librumpdev-pci=$pkgver-$pkgrel)
+
+  mkdir -vp $pkgdir/usr/lib/
+
+  # Install libraries
+  _pick librumpdev_disk
+  _pick librumpdev_ata
+  _pick librumpdev_umass
+  _pick librumpdev_ahcisata
+  _pick librumpdev_piixide
+  _pick librumpdev_scsipi
+}
+
+package_librumpdev-usb() {
+  pkgdesc="Rump USB device libraries"
+  depends=(librump=$pkgver-$pkgrel librumpdev-pci=$pkgver-$pkgrel)
+
+  mkdir -vp $pkgdir/usr/lib/
+
+  # Install libraries
+  _pick librumpdev_usb
+  _pick librumpdev_pci_usbhc
+  _pick librumpdev_ugenhc
+}
+
+package_librumpdev-if() {
+  pkgdesc="Rump network interface device libraries"
+  depends=(librump=$pkgver-$pkgrel librumpdev-pci=$pkgver-$pkgrel)
+
+  mkdir -vp $pkgdir/usr/lib/
+
+  # Install libraries
+  _pick librumpdev_pci_if_iwn
+  _pick librumpdev_pci_if_pcn
+  _pick librumpdev_pci_if_wm
+  _pick librumpdev_miiphy
+  _pick librumpdev_bpf
+}
+
+# vim: ts=2 sw=2 et:

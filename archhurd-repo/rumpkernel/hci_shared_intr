@@ -1,0 +1,108 @@
+The uhci driver sets up the intr handler before initializing the intr mutex...
+
+https://mail-index.netbsd.org/netbsd-bugs/2025/07/02/msg089425.html
+
+Index: rumpkernel/buildrump.sh/src/sys/dev/pci/ehci_pci.c
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/dev/pci/ehci_pci.c
++++ rumpkernel/buildrump.sh/src/sys/dev/pci/ehci_pci.c
+@@ -194,6 +194,9 @@ ehci_pci_attach(device_t parent, device_
+ 		goto fail;
+ 	}
+ 
++	/* Initialise mutex early for intr from other device */
++	mutex_init(&sc->sc.sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
++
+ 	/*
+ 	 * Allocate IRQ
+ 	 */
+Index: rumpkernel/buildrump.sh/src/sys/dev/pci/ohci_pci.c
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/dev/pci/ohci_pci.c
++++ rumpkernel/buildrump.sh/src/sys/dev/pci/ohci_pci.c
+@@ -137,6 +137,9 @@ ohci_pci_attach(device_t parent, device_
+ 		goto fail;
+ 	}
+ 
++	/* Initialise mutex early for intr from other device */
++	mutex_init(&sc->sc.sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
++
+ 	/*
+ 	 * Allocate IRQ
+ 	 */
+Index: rumpkernel/buildrump.sh/src/sys/dev/pci/uhci_pci.c
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/dev/pci/uhci_pci.c
++++ rumpkernel/buildrump.sh/src/sys/dev/pci/uhci_pci.c
+@@ -127,6 +127,9 @@ uhci_pci_attach(device_t parent, device_
+ 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+ 		       csr | PCI_COMMAND_MASTER_ENABLE);
+ 
++	/* Initialise mutex early for intr from other device */
++	mutex_init(&sc->sc.sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
++
+ 	/* Map and establish the interrupt. */
+ 	if (pci_intr_alloc(pa, &ih, NULL, 0) != 0) {
+ 		aprint_error_dev(self, "couldn't map interrupt\n");
+Index: rumpkernel/buildrump.sh/src/sys/dev/pci/xhci_pci.c
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/dev/pci/xhci_pci.c
++++ rumpkernel/buildrump.sh/src/sys/dev/pci/xhci_pci.c
+@@ -222,6 +222,9 @@ xhci_pci_attach(device_t parent, device_
+ 	counts[PCI_INTR_TYPE_MSIX] = 0;
+ #endif
+ 
++	/* Initialise mutex early for intr from other device */
++	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
++
+ 	/* Allocate and establish the interrupt. */
+ 	if (pci_intr_alloc(pa, &psc->sc_pihp, counts, PCI_INTR_TYPE_MSIX)) {
+ 		aprint_error_dev(self, "can't allocate handler\n");
+Index: rumpkernel/buildrump.sh/src/sys/dev/usb/ehci.c
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/dev/usb/ehci.c
++++ rumpkernel/buildrump.sh/src/sys/dev/usb/ehci.c
+@@ -419,7 +419,6 @@ ehci_init(ehci_softc_t *sc)
+ 
+ 	mutex_init(&sc->sc_rhlock, MUTEX_DEFAULT, IPL_NONE);
+ 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
+-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
+ 	cv_init(&sc->sc_doorbell, "ehcidb");
+ 
+ 	sc->sc_xferpool = pool_cache_init(sizeof(struct ehci_xfer), 0, 0, 0,
+Index: rumpkernel/buildrump.sh/src/sys/dev/usb/ohci.c
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/dev/usb/ohci.c
++++ rumpkernel/buildrump.sh/src/sys/dev/usb/ohci.c
+@@ -822,7 +822,6 @@ ohci_init(ohci_softc_t *sc)
+ 	callout_init(&sc->sc_tmo_rhsc, CALLOUT_MPSAFE);
+ 
+ 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
+-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
+ 
+ 	sc->sc_rhsc_si = softint_establish(SOFTINT_USB | SOFTINT_MPSAFE,
+ 	    ohci_rhsc_softint, sc);
+Index: rumpkernel/buildrump.sh/src/sys/dev/usb/uhci.c
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/dev/usb/uhci.c
++++ rumpkernel/buildrump.sh/src/sys/dev/usb/uhci.c
+@@ -466,7 +466,6 @@ uhci_init(uhci_softc_t *sc)
+ 
+ 	/* Initialise mutex early for uhci_alloc_* */
+ 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
+-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
+ 
+ 	/*
+ 	 * Allocate a TD, inactive, that hangs from the last QH.
+Index: rumpkernel/buildrump.sh/src/sys/dev/usb/xhci.c
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/dev/usb/xhci.c
++++ rumpkernel/buildrump.sh/src/sys/dev/usb/xhci.c
+@@ -1639,7 +1639,6 @@ xhci_init(struct xhci_softc *sc)
+ 	cv_init(&sc->sc_cmdbusy_cv, "xhcicmdq");
+ 	mutex_init(&sc->sc_rhlock, MUTEX_DEFAULT, IPL_NONE);
+ 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
+-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
+ 
+ 	struct xhci_erste *erst;
+ 	erst = KERNADDR(&sc->sc_eventst_dma, 0);

@@ -1,0 +1,16 @@
+pkgbase = libnghttp3
+	pkgdesc = HTTP/3 library written in C
+	pkgver = 1.10.1
+	pkgrel = 1
+	url = https://github.com/ngtcp2/nghttp3
+	arch = x86_64
+	license = MIT
+	depends = glibc
+	provides = libnghttp3.so
+	source = https://github.com/ngtcp2/nghttp3/releases/download/v1.10.1/nghttp3-1.10.1.tar.xz
+	source = https://github.com/ngtcp2/nghttp3/releases/download/v1.10.1/nghttp3-1.10.1.tar.xz.asc
+	validpgpkeys = F4F3B91474D1EB29889BD0EF7E8403D5D673C366
+	sha256sums = e6b8ebaadf8e57cba77a3e34ee8de465fe952481fbf77c4f98d48737bdf50e03
+	sha256sums = SKIP
+
+pkgname = libnghttp3
