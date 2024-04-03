@@ -35,6 +35,32 @@ install_flex() {
     cd ..
 }
 
+install_bison() {
+   pushd $SOURCE/$BISON_SRC &&
+   autoreconf -fi &&
+   popd &&
+   mkdir -p $BISON_SRC.obj &&
+   pushd $BISON_SRC.obj &&
+   ac_cv_func_realloc_0_nonnull=yes ac_cv_func_malloc_0_nonnull=yes \
+   $SOURCE/$BISON_SRC/configure --prefix="$SYS_ROOT" \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+   make -j$PROCS &&
+   make -j$PROCS install &&
+   popd
+}
+
+install_diffutils() {
+   rm -rf $DIFFUTILS_SRC.obj &&
+   mkdir -p $DIFFUTILS_SRC.obj &&
+   pushd $DIFFUTILS_SRC.obj &&
+   $SOURCE/$DIFFUTILS_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST --host=$CROSS_HURD_TARGET
+   make -j$PROCS &&
+   make -j$PROCS install &&
+   popd
+}
+
 install_mig() {
   cd $SOURCE/$GNUMIG_SRC &&
     autoreconf -i &&
@@ -353,6 +379,10 @@ install_util_linux() {
       --build="$HOST" \
       --host="$CROSS_HURD_TARGET" \
       --disable-makeinstall-chown \
+      --without-ncurses \
+      --without-systemdsystemunitdir \
+      --disable-year2038 \
+      --disable-liblastlog2 \
       --without-ncursesw \
       --disable-makeinstall-setuid &&
     make -j$PROCS &&
@@ -431,6 +461,9 @@ install_libdaemon() {
 }
 
 install_libtirpc() {
+  pushd $SOURCE/$LIBTIRPC_SRC &&
+  autoreconf -fi &&
+  popd &&
   create_temp $LIBTIRPC_SRC.obj &&
     pushd $LIBTIRPC_SRC.obj &&
     $SOURCE/$LIBTIRPC_SRC/configure \
@@ -472,7 +505,8 @@ install_shadow() {
       --cache-file=config.cache \
       --enable-subordinate-ids=no \
       --disable-dependency-tracking \
-      --without-libbsd &&
+      --without-libbsd \
+      CFLAGS=-DLOGIN_NAME_MAX=256 &&
     echo "#define ENABLE_SUBIDS 1" >>config.h &&
     make -j$PROCS && make exec_prefix=$SYS_ROOT -j$PROCS install && cd ..
 }
@@ -483,6 +517,19 @@ install_sed() {
     $SOURCE/$SED_SRC/configure --prefix="$SYS_ROOT" \
       --build="$HOST" \
       --host="$CROSS_HURD_TARGET" &&
+    make -j$PROCS &&
+    make -j$PROCS install &&
+    cd ..
+}
+
+install_isl() {
+  rm -rf $ISL_SRC.obj &&
+    mkdir -p $ISL_SRC.obj &&
+    cd $ISL_SRC.obj &&
+    $SOURCE/$ISL_SRC/configure \
+      --prefix="$SYS_ROOT" \
+      --build=${HOST} \
+      --host=${CROSS_HURD_TARGET} &&
     make -j$PROCS &&
     make -j$PROCS install &&
     cd ..
@@ -859,6 +906,39 @@ install_rump() {
     popd
 }
 
+
+install_libxkbcommon () {
+   rm -rf $LIBXKBCOMMON_SRC.obj &&
+   meson setup --prefix=$SYS_ROOT $LIBXKBCOMMON_SRC.obj $SOURCE/$LIBXKBCOMMON_SRC/ &&
+   pushd $LIBXKBCOMMON_SRC.obj &&
+   meson install &&
+   popd
+}
+
+install_xkeyboard_config () {
+   rm -rf $KEYBOARD_CONFIG_SRC.obj &&
+   meson setup --prefix=$SYS_ROOT $XKEYBOARD_CONFIG_SRC.obj $SOURCE/$XKEYBOARD_CONFIG_SRC/ &&
+   pushd $XKEYBOARD_CONFIG_SRC.obj &&
+   meson install &&
+   popd
+}
+
+install_libxml2 () {
+   pushd $SOURCE/$LIBXML2_SRC &&
+   autoreconf -fi &&
+   popd
+   rm -rf $LIBXML2_SRC.obj &&
+   mkdir -p $LIBXML2_SRC.obj &&
+   pushd $LIBXML2_SRC.obj &&
+   $SOURCE/$LIBXML2_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET \
+	  --without-python &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
 install_findutils() {
   rm -rf $LIBPCIACCESS_SRC.obj &&
     mkdir -p $LIBPCIACCESS_SRC.obj &&
@@ -1090,6 +1170,210 @@ install_htop() {
     popd
 }
 
+install_m4() {
+   rm -rf $M4_SRC.obj &&
+   mkdir -p $M4_SRC.obj &&
+   pushd $M4_SRC.obj &&
+   $SOURCE/$M4_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_libtool() {
+   rm -rf $LIBTOOL_SRC.obj &&
+   mkdir -p $LIBTOOL_SRC.obj &&
+   pushd $LIBTOOL_SRC.obj &&
+   $SOURCE/$LIBTOOL_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_patch() {
+   rm -rf $PATCH_SRC.obj &&
+   mkdir -p $PATCH_SRC.obj &&
+   pushd $PATCH_SRC.obj &&
+   $SOURCE/$PATCH_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_tar() {
+   rm -rf $TAR_SRC.obj &&
+   mkdir -p $TAR_SRC.obj &&
+   pushd $TAR_SRC.obj &&
+   $SOURCE/$TAR_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET \
+	  --disable-year2038 &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_xz() {
+   rm -rf $XZ_SRC.obj &&
+   mkdir -p $XZ_SRC.obj &&
+   pushd $XZ_SRC.obj &&
+   $SOURCE/$XZ_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_texinfo() {
+   rm -rf $TEXINFO_SRC.obj &&
+   mkdir -p $TEXINFO_SRC.obj &&
+   pushd $TEXINFO_SRC.obj &&
+   texinfo_cv_sys_iconv_converts_euc_cn=yes \
+   $SOURCE/$TEXINFO_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" \
+      --enable-cross-guess &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_help2man() {
+   rm -rf $HELP2MAN_SRC.obj &&
+   mkdir -p $HELPMAN_SRC.obj &&
+   pushd $HELPMAN_SRC.obj &&
+   $SOURCE/$HELP2MAN_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_gperf() {
+   rm -rf $GPERF_SRC.obj &&
+   mkdir -p $GPERF_SRC.obj &&
+   pushd $GPERF_SRC.obj &&
+   $SOURCE/$GPERF_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_libgpg_error() {
+   rm -rf $LIBGPG_ERROR_SRC.obj &&
+   mkdir -p $LIBGPG_ERROR_SRC.obj &&
+   pushd $LIBGPG_ERROR_SRC.obj &&
+   $SOURCE/$LIBGPG_ERROR_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_libassuan() {
+   rm -rf $LIBASSUAN_SRC.obj &&
+   mkdir -p $LIBASSUAN_SRC.obj &&
+   pushd $LIBASSUAN_SRC.obj &&
+   $SOURCE/$LIBASSUAN_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_readline() {
+   rm -rf $READLINE_SRC.obj &&
+   mkdir -p $READLINE_SRC.obj &&
+   pushd $READLINE_SRC.obj &&
+   $SOURCE/$READLINE_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_xxhash() {
+   pushd $SOURCE/$XXHASH_SRC &&
+   make PREFIX=$SYS_ROOT DISPATCH=1 install &&
+   popd
+}
+
+install_elfutils() {
+   rm -rf $ELFUTILS_SRC.obj &&
+   mkdir -p $ELFUTILS_SRC.obj &&
+   pushd $ELFUTILS_SRC.obj &&
+   $SOURCE/$ELFUTILS_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_debugedit() {
+   rm -rf $DEBUGEDIT_SRC.obj &&
+   mkdir -p $DEBUGEDIT_SRC.obj &&
+   pushd $DEBUGEDIT_SRC.obj &&
+   ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes \
+   $SOURCE/$DEBUGEDIT_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_lz4() {
+    rm -rf $LZ4_SRC.obj &&
+        mkdir -p $LZ4_SRC.obj &&
+        local build_dir=$PWD/$LZ4_SRC.obj &&
+        pushd $SOURCE/$LZ4_SRC &&
+        generate_meson_cross_file cross-file-$CPU.txt &&
+        meson setup --cross-file cross-file-$CPU.txt build/meson $build_dir &&
+        meson compile -C $build_dir &&
+        meson install -C $build_dir &&
+        popd
+}
+
+install_libssh2() {
+   rm -rf $LIBSSH2_SRC.obj &&
+   mkdir -p $LIBSSH2_SRC.obj &&
+   pushd $LIBSSH2_SRC.obj &&
+   $SOURCE/$LIBSSH2_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_libpcap() {
+   rm -rf $LIBPCAP_SRC.obj &&
+   mkdir -p $LIBPCAP_SRC.obj &&
+   pushd $LIBPCAP_SRC.obj &&
+   $SOURCE/$LIBPCAP_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" \
+	  --enable-ipv6 &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+
 install_minimal_system() {
   install_libxcrypt &&
     install_libpciaccess &&
@@ -1152,12 +1436,29 @@ install_development_tools() {
     install_mig &&
     install_binutils &&
     install_gmp &&
+    install_isl &&
     install_mpfr &&
     install_mpc &&
     install_gcc &&
     install_make &&
     install_perl &&
-    install_git
+    install_git &&
+    install_diffutils &&
+    install_m4 &&
+    install_libtool &&
+    install_patch &&
+    install_tar &&
+    install_xz &&
+    install_lz4 &&
+    install_help2man &&
+    install_texinfo &&
+    install_gperf &&
+    install_libassuan &&
+    install_xxhash &&
+    install_elfutils &&
+    install_readline &&
+    install_debugedit &&
+    install_libssh2
 }
 
 install_editors() {
