@@ -134,8 +134,11 @@ install_gnumach() {
       --disable-net-group \
       --disable-pcmcia-group \
       --disable-wireless-group \
+      --disable-linux-group \
       $disable_user32 &&
     make clean &&
+    make ipc/mach_port.server.o kern/mach_debug.server.o kern/mach.server.o kern/mach_host.server.o device/device.server.o device/device_pager.server.o kern/mach4.server.o kern/gnumach.server.o kern/experimental.server.o i386/i386/mach_i386.server.o kern/task_notify.user.o &&
+    make vm/memory_object_user.user.o vm/memory_object_default.user.h device/device_reply.user.o device/memory_object_reply.user.o i386/i386/i386asm.h &&
     make -j$PROCS gnumach.gz gnumach gnumach.msgids &&
     make -j$PROCS install &&
     mkdir -p $SYSTEM/boot &&
