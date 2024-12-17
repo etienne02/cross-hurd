@@ -545,7 +545,7 @@ install_gcc() {
       --disable-bootstrap \
       --with-local-prefix="$SYS_ROOT" \
       --disable-nls \
-      --enable-languages=c,c++,ada \
+      --enable-languages=c,c++ \
       --disable-libstdcxx-pch \
       --with-system-zlib \
       --with-native-system-header-dir="$SYS_ROOT/include" \
