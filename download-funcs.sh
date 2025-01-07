@@ -292,10 +292,7 @@ download_iana_etc() {
 }
 
 download_inetutils() {
-  download_package $INETUTILS_URL &&
-    pushd $INETUTILS_SRC &&
-    apply_patch $SCRIPT_DIR/patches/inetutils/hurd-gcc14.patch 1 &&
-    popd
+  download_package $INETUTILS_URL
 }
 
 download_wget() {
