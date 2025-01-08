@@ -1,11 +1,19 @@
 Jérémie Koenig <jk@jk.fr.eu.org>
 Add ramdisk support for d-i.
 
-Index: gnumach/Makefrag.am
-===================================================================
---- gnumach.orig/Makefrag.am
-+++ gnumach/Makefrag.am
-@@ -324,6 +324,8 @@ libkernel_a_SOURCES += \
+---
+ Makefrag.am        |    2 
+ device/ramdisk.c   |  163 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ device/ramdisk.h   |   47 +++++++++++++++
+ i386/i386at/conf.c |    3 
+ kern/boot_script.c |    8 ++
+ kern/bootstrap.c   |   18 +++++
+ kern/bootstrap.h   |    1 
+ 7 files changed, 242 insertions(+)
+
+--- a/Makefrag.am
++++ b/Makefrag.am
+@@ -316,6 +316,8 @@ libkernel_a_SOURCES += \
  	device/net_io.c \
  	device/net_io.h \
  	device/param.h \
@@ -14,10 +22,8 @@ Index: gnumach/Makefrag.am
  	device/subrs.c \
  	device/subrs.h \
  	device/tty.h
-Index: gnumach/i386/i386at/conf.c
-===================================================================
---- gnumach.orig/i386/i386at/conf.c
-+++ gnumach/i386/i386at/conf.c
+--- a/i386/i386at/conf.c
++++ b/i386/i386at/conf.c
 @@ -31,6 +31,7 @@
  #include <device/conf.h>
  #include <kern/mach_clock.h>
@@ -35,10 +41,8 @@ Index: gnumach/i386/i386at/conf.c
  #ifdef	MACH_KMSG
          { kmsgname,     kmsgopen,       kmsgclose,       kmsgread,
            nulldev_write,        kmsggetstat,    nulldev_setstat,           nomap,
-Index: gnumach/kern/boot_script.c
-===================================================================
---- gnumach.orig/kern/boot_script.c
-+++ gnumach/kern/boot_script.c
+--- a/kern/boot_script.c
++++ b/kern/boot_script.c
 @@ -90,12 +90,20 @@ prompt_resume_task (struct cmd *cmd, con
    return boot_script_prompt_task_resume (cmd);
  }
@@ -60,11 +64,9 @@ Index: gnumach/kern/boot_script.c
  };
  #define NUM_BUILTIN (sizeof (builtin_symbols) / sizeof (builtin_symbols[0]))
  
-Index: gnumach/kern/bootstrap.c
-===================================================================
---- gnumach.orig/kern/bootstrap.c
-+++ gnumach/kern/bootstrap.c
-@@ -51,6 +51,7 @@
+--- a/kern/bootstrap.c
++++ b/kern/bootstrap.c
+@@ -52,6 +52,7 @@
  #include <vm/vm_user.h>
  #include <vm/pmap.h>
  #include <device/device_port.h>
@@ -96,11 +98,9 @@ Index: gnumach/kern/bootstrap.c
  boot_script_task_create (struct cmd *cmd)
  {
    kern_return_t rc = task_create_kernel(TASK_NULL, FALSE, &cmd->task);
-Index: gnumach/device/ramdisk.c
-===================================================================
 --- /dev/null
-+++ gnumach/device/ramdisk.c
-@@ -0,0 +1,160 @@
++++ b/device/ramdisk.c
+@@ -0,0 +1,163 @@
 +#include <mach/vm_param.h>
 +#include <machine/vm_param.h>
 +#include <vm/vm_kern.h>
@@ -132,7 +132,10 @@ Index: gnumach/device/ramdisk.c
 +	rd->size = round_page(size);
 +	err = kmem_alloc(kernel_map, (vm_offset_t *) &rd->data, rd->size);
 +	if(err != KERN_SUCCESS)
++	{
++		printf("could not allocate memory for %s%d: %d\n", RAMDISK_NAME, ramdisk_num, err);
 +		return err;
++	}
 +
 +	/* initialize */
 +	if(initdata)
@@ -261,10 +264,8 @@ Index: gnumach/device/ramdisk.c
 +	return pmap_phys_to_frame(kvtophys((vm_offset_t) ramdisk[dev].data + off));
 +}
 +
-Index: gnumach/device/ramdisk.h
-===================================================================
 --- /dev/null
-+++ gnumach/device/ramdisk.h
++++ b/device/ramdisk.h
 @@ -0,0 +1,47 @@
 +#ifndef _KERN_RAMDISK_H_
 +#define _KERN_RAMDISK_H_
@@ -313,10 +314,8 @@ Index: gnumach/device/ramdisk.h
 +	}
 +
 +#endif
-Index: gnumach/kern/bootstrap.h
-===================================================================
---- gnumach.orig/kern/bootstrap.h
-+++ gnumach/kern/bootstrap.h
+--- a/kern/bootstrap.h
++++ b/kern/bootstrap.h
 @@ -22,5 +22,6 @@
  #include <kern/boot_script.h>
  
