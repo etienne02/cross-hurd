@@ -215,12 +215,7 @@ download_libedit() {
 }
 
 download_libtirpc() {
-  download_package $LIBTIRPC_URL &&
-    pushd $LIBTIRPC_SRC &&
-    apply_patch $SCRIPT_DIR/patches/libtirpc/03-kfreebsd.diff 1 &&
-    apply_patch $SCRIPT_DIR/patches/libtirpc/05-hurd-port.diff 1 &&
-    apply_patch $SCRIPT_DIR/patches/libtirpc/06-hurd-client-port.diff 1 &&
-    popd
+  download_package $LIBTIRPC_URL
 }
 
 download_make() {
