@@ -179,6 +179,7 @@ download_glibc() {
     apply_patch $SCRIPT_DIR/patches/glibc/unsubmitted-prof-eintr.diff 1 &&
     apply_patch $SCRIPT_DIR/patches/glibc/unsubmitted-getaux_at_secure.diff 1 &&
     apply_patch $SCRIPT_DIR/patches/glibc/tg-mach-hurd-link.diff 1 &&
+    apply_patch $SCRIPT_DIR/patches/glibc/0001-dirent-set-d_name-size-to-256.patch 1 &&
     cd ..
 }
 
