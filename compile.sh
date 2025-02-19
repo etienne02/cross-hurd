@@ -134,6 +134,7 @@ install_gnumach() {
       --disable-net-group \
       --disable-pcmcia-group \
       --disable-wireless-group \
+      --enable-ncpus=256 \
       $disable_user32 &&
     make clean &&
     make -j$PROCS gnumach.gz gnumach gnumach.msgids &&
