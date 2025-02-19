@@ -21,11 +21,12 @@ create_image() {
     # We need to ensure the partition devices exist. Inside a container,
     # these dynamic devices won't be created automatically.
     # https://github.com/moby/moby/issues/27886#issuecomment-417074845
-    lsblk --raw --output "NAME,MAJ:MIN" --noheadings $LOOPDEV | tail -n +2 | while read dev node; do
-      MAJ=$(echo $node | cut -d: -f1)
-      MIN=$(echo $node | cut -d: -f2)
-      [ ! -e "/dev/$dev" ] && mknod "/dev/$dev" b $MAJ $MIN
-    done
+    #lsblk --raw --output "NAME,MAJ:MIN" --noheadings $LOOPDEV | tail -n +2 | while read dev node; do
+    #  MAJ=$(echo $node | cut -d: -f1)
+    #  MIN=$(echo $node | cut -d: -f2)
+    #  [ ! -e "/dev/$dev" ] && mknod "/dev/$dev" b $MAJ $MIN
+    #done
+    sudo partprobe $LOOP
   sudo mkfs.ext2 -o hurd -m 1 -v $LOOPPART
 }
 
