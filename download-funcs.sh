@@ -157,9 +157,11 @@ download_ca_certificates() {
 
 apply_patch() {
   print_info "Using patch $1 (level: $2)"
-  if patch -f -Np$2 --dry-run <$1 >/dev/null 2>&1; then
+  patch -f -Np$2 --dry-run <$1 >/dev/null 2>&1
+  result=$?
+  if [ $result -eq 0 ]; then
     patch -Np$2 <$1 || exit 1
-  else
+  elif [ $result -gt 1 ]; then
     echo -e "\033[0;31mCannot apply patch!\033[0m"
     exit 1
   fi
