@@ -21,12 +21,16 @@ install_gnumach() {
    local user_cc
    if [ ! -z "$USER32" ]; then
       enable_user32="--enable-user32"
-      user_mig=/cross-tools-i686/bin/i686-gnu-mig
-      user_cc=/cross-tools-i686/bin/i686-gnu-gcc
+      user_mig=$CROSS_TOOLS/bin/i686-gnu-mig
+      user_cc=$CROSS_TOOLS/bin/i686-gnu-gcc
       user_cpp="$user_cc -E"
-   else
+  elif [ $CPU = "x86_84" ]; then
       user_mig=$CROSS_TOOLS/bin/x86_64-gnu-mig
       user_cc=$CROSS_TOOLS/bin/x86_64-gnu-gcc
+      user_cpp="$user_cc -E"
+   else
+      user_mig=$CROSS_TOOLS/bin/i686-gnu-mig
+      user_cc=$CROSS_TOOLS/bin/i686-gnu-gcc
       user_cpp="$user_cc -E"
    fi &&
       USER_CC="$user_cc" USER_CPP="$user_cpp" \

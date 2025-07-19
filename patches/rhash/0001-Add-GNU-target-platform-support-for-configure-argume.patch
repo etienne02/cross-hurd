@@ -1,0 +1,26 @@
+From fafe75433047ebe67d3191071d9f7a2b25f2cce9 Mon Sep 17 00:00:00 2001
+From: Etienne Brateau <etienne.brateau@gmail.com>
+Date: Tue, 18 Mar 2025 22:25:32 +0100
+Subject: [PATCH 1/2] Add GNU target platform support for configure argument
+
+GNU is supported for auto-configuration but was not when defining the
+platform with --target. This is now supported.
+---
+ configure | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configure b/configure
+index bfb6cee..2ce361e 100755
+--- a/configure
++++ b/configure
+@@ -533,6 +533,7 @@ else
+       wine) TARGET_OS=Wine ;;
+       darwin*) TARGET_OS=Darwin ;;
+       cygwin*) TARGET_OS=CYGWIN ;;
++      gnu) TARGET_OS=GNU ;;
+     esac
+   }
+   TARGET_OS="UNKNOWN"
+-- 
+2.49.0
+

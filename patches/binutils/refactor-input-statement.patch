@@ -1,0 +1,37 @@
+This is prep work for the next patch, no functional change intended.
+
+Signed-off-by: Calvin Owens <calvin@wbinvd.org>
+---
+ ld/ldlang.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/ld/ldlang.c b/ld/ldlang.c
+index d75f9df4d43..b52ca2c4b03 100644
+--- a/ld/ldlang.c
++++ b/ld/ldlang.c
+@@ -362,7 +362,7 @@ archive_path (const char *pattern)
+    return whether F matches FILE_SPEC.  */
+ 
+ static bool
+-input_statement_is_archive_path (const char *file_spec, char *sep,
++input_statement_is_archive_path (const char *file_spec, const char *sep,
+ 				 lang_input_statement_type *f)
+ {
+   bool match = false;
+@@ -377,9 +377,11 @@ input_statement_is_archive_path (const char *file_spec, char *sep,
+       if (sep != file_spec)
+ 	{
+ 	  const char *aname = bfd_get_filename (f->the_bfd->my_archive);
+-	  *sep = 0;
+-	  match = name_match (file_spec, aname) == 0;
+-	  *sep = link_info.path_separator;
++	  char *tmp = stat_strdup (file_spec);
++
++	  tmp[sep - file_spec] = 0;
++	  match = name_match (tmp, aname) == 0;
++	  stat_free (tmp);
+ 	}
+     }
+   return match;
+-- 
+2.47.3

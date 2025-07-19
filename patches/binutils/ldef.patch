@@ -1,0 +1,45 @@
+../../ld/ldelf.c: In function ‘ldelf_search_needed’:
+    ../../ld/ldelf.c:538:34: error: assignment discards ‘const’ qualifier from pointer target type [-Werror=discarded-qualifiers]
+      538 |                       if ((slash = strrchr (replacement, '/')) != NULL)
+          |                                  ^
+
+Fix this by passing the obviously equal non-const pointer to strrchr(),
+instead of the const one.
+
+    ../../ld/ldelf.c: In function ‘ldelf_parse_ld_so_conf_include’:
+    ../../ld/ldelf.c:797:17: error: initialization discards ‘const’ qualifier from pointer target type [-Werror=discarded-qualifiers]
+      797 |       char *p = strrchr (filename, '/');
+          |                 ^~~~~~~
+
+Fix this by declaring the local pointer varaible as const, since it is
+not modified.
+
+Signed-off-by: Calvin Owens <calvin@wbinvd.org>
+---
+ ld/ldelf.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/ld/ldelf.c b/ld/ldelf.c
+index 15d4b576bc0..518ea45397b 100644
+--- a/ld/ldelf.c
++++ b/ld/ldelf.c
+@@ -535,7 +535,7 @@ ldelf_search_needed (const char *path, struct dt_needed *n, int force,
+ 			}
+ 
+ 		      replacement = freeme;
+-		      if ((slash = strrchr (replacement, '/')) != NULL)
++		      if ((slash = strrchr (freeme, '/')) != NULL)
+ 			* slash = 0;
+ 		    }
+ 		}
+@@ -794,7 +794,7 @@ ldelf_parse_ld_so_conf_include (struct ldelf_ld_so_conf *info,
+ 
+   if (pattern[0] != '/')
+     {
+-      char *p = strrchr (filename, '/');
++      const char *p = strrchr (filename, '/');
+       size_t patlen = strlen (pattern) + 1;
+ 
+       newp = xmalloc (p - filename + 1 + patlen);
+-- 
+2.47.3

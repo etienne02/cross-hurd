@@ -1,0 +1,51 @@
+    ../../ld/ldlang.c: In function ‘archive_path’:
+    ../../ld/ldlang.c:347:5: error: assignment discards ‘const’ qualifier from pointer target type [-Werror=discarded-qualifiers]
+      347 |   p = strchr (pattern, link_info.path_separator);
+          |     ^
+
+Because the prior patch refactored input_statement_is_archive_path() to
+take a constant pointer as its second argument, fix this by making the
+return type of archive_path() const, and fixing up its two callers.
+
+Signed-off-by: Calvin Owens <calvin@wbinvd.org>
+---
+ ld/ldlang.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/ld/ldlang.c b/ld/ldlang.c
+index b52ca2c4b03..1a18b8f5674 100644
+--- a/ld/ldlang.c
++++ b/ld/ldlang.c
+@@ -337,10 +337,10 @@ stat_ldirname (const char *name)
+ /* If PATTERN is of the form archive:file, return a pointer to the
+    separator.  If not, return NULL.  */
+ 
+-static char *
++static const char *
+ archive_path (const char *pattern)
+ {
+-  char *p = NULL;
++  const char *p = NULL;
+ 
+   if (link_info.path_separator == 0)
+     return p;
+@@ -423,7 +423,7 @@ walk_wild_file_in_exclude_list (struct name_list *exclude_list,
+        list_tmp;
+        list_tmp = list_tmp->next)
+     {
+-      char *p = archive_path (list_tmp->name);
++      const char *p = archive_path (list_tmp->name);
+ 
+       if (p != NULL)
+ 	{
+@@ -479,7 +479,7 @@ walk_wild_section_match (lang_wild_statement_type *ptr,
+ {
+   struct wildcard_list *sec;
+   const char *file_spec = ptr->filename;
+-  char *p;
++  const char *p;
+ 
+   /* Check if filenames match.  */
+   if (file_spec == NULL)
+-- 
+2.47.3

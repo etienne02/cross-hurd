@@ -1,0 +1,14 @@
+--- a/src/util.c
++++ b/src/util.c
+@@ -54,6 +54,11 @@
+ 
+ #include <safe.h>
+ 
++/* make GNU/Hurd happy */
++#ifndef PATH_MAX
++# define PATH_MAX 8192
++#endif
++
+ static void makedirs (char const *);
+ 
+ typedef struct

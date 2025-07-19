@@ -1,0 +1,43 @@
+    ../../gprof/source.c: In function ‘annotate_source’:
+    ../../gprof/source.c:126:21: error: assignment discards ‘const’ qualifier from pointer target type [-Werror=discarded-qualifiers]
+      126 |           name_only = strrchr (sf->name, '/');
+          |                     ^
+
+Fix this and the similar problem immediately below it by declaring the
+local pointer varaibles as const, since they are not modified.
+
+Signed-off-by: Calvin Owens <calvin@wbinvd.org>
+---
+ gprof/source.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/gprof/source.c b/gprof/source.c
+index 494f6ecc9b2..322d1fe25a7 100644
+--- a/gprof/source.c
++++ b/gprof/source.c
+@@ -98,7 +98,8 @@ annotate_source (Source_File *sf, unsigned int max_width,
+   bool new_line;
+   char buf[8192];
+   char *fname;
+-  char *annotation, *name_only;
++  char *annotation;
++  const char *name_only;
+   FILE *ifp, *ofp;
+   Search_List_Elem *sle = src_search_list.head;
+ 
+@@ -126,11 +127,11 @@ annotate_source (Source_File *sf, unsigned int max_width,
+ 	  name_only = strrchr (sf->name, '/');
+ #ifdef HAVE_DOS_BASED_FILE_SYSTEM
+ 	  {
+-	    char *bslash = strrchr (sf->name, '\\');
++	    const char *bslash = strrchr (sf->name, '\\');
+ 	    if (name_only == NULL || (bslash != NULL && bslash > name_only))
+ 	      name_only = bslash;
+ 	    if (name_only == NULL && sf->name[0] != '\0' && sf->name[1] == ':')
+-	      name_only = (char *)sf->name + 1;
++	      name_only = (const char *)sf->name + 1;
+ 	  }
+ #endif
+ 	  if (name_only)
+-- 
+2.47.3
