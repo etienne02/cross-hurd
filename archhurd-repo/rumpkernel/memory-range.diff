@@ -1,0 +1,24 @@
+---
+ pci-userspace/src-gnu/pci_user-gnu.c |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/pci-userspace/src-gnu/pci_user-gnu.c
++++ b/pci-userspace/src-gnu/pci_user-gnu.c
+@@ -138,6 +142,7 @@ pci_userspace_init(void)
+ 	int i = 0;
+ 	while (((pci_dev = pci_device_next (dev_iter)) != NULL)
+ 			&& (i < NUMDEVS)) {
++		pci_device_probe(pci_dev);
+ 		pci_devices[i++] = pci_dev;
+ 	}
+ 	numdevs = i;
+@@ -170,7 +170,8 @@ rumpcomp_pci_map(unsigned long addr, uns
+ found:
+ 
+ 	pci_device_map_range(pci_devices[i], addr, len, 1, &ret);
+-	return pci_devices[i]->regions[residx].memory;
++	pci_devices[i]->regions[residx].memory = ret;
++	return ret;
+ }
+ 
+ void

@@ -1,0 +1,26 @@
+Index: rumpkernel/pci-userspace/src-gnu/pci_user-gnu.c
+===================================================================
+--- rumpkernel.orig/pci-userspace/src-gnu/pci_user-gnu.c
++++ rumpkernel/pci-userspace/src-gnu/pci_user-gnu.c
+@@ -65,7 +65,7 @@
+ 
+ #include "pci_user.h"
+ #include "experimental_U.h"
+-#include <device/intr.h>
++#include <device/notify.h>
+ #include "mach_debug_U.h"
+ #include <mach/vm_param.h>
+ #include <mach.h>
+@@ -307,10 +307,10 @@ intrthread(void *arg)
+ 	int irq_server (mach_msg_header_t *inp, mach_msg_header_t *outp) {
+ 		char interrupt[4];
+ 
+-		mach_intr_notification_t *n = (mach_intr_notification_t *) inp;
++		device_intr_notification_t *n = (device_intr_notification_t *) inp;
+ 
+ 		((mig_reply_header_t *) outp)->RetCode = MIG_NO_REPLY;
+-		if (n->intr_header.msgh_id != MACH_INTR_NOTIFY) {
++		if (n->intr_header.msgh_id != DEVICE_INTR_NOTIFY) {
+ 			MACH_PRINT("not an interrupt\n");
+ 			return 0;
+ 		}

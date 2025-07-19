@@ -1,0 +1,12 @@
+Index: rumpkernel/netbsd/sys/rump/include/rump/rump_syscalls_compat.h
+===================================================================
+--- rumpkernel.orig/netbsd/sys/rump/include/rump/rump_syscalls_compat.h
++++ rumpkernel/netbsd/sys/rump/include/rump/rump_syscalls_compat.h
+@@ -37,6 +37,7 @@
+ #include <sys/types.h> /* typedefs */
+ #include <sys/select.h> /* typedefs */
+ #include <sys/socket.h> /* typedefs */
++#include <sys/wait.h> /* typedefs */
+ 
+ #include <signal.h> /* typedefs */
+ #endif

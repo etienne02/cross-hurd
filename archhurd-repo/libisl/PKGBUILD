@@ -1,0 +1,41 @@
+# Maintainer: Frederik Schwan <freswa at archlinux dot org>
+# Contributor: Andrew Sun  <adsun701 at gmail dot com>
+# Contributor: Kritias     <theodoridisgr at gmail dot com>
+# Contributor: sudokode    <sudokode at gmail dot com>
+# Contributor: Allan McRae <allan at archlinux dot org>
+
+pkgname=libisl
+pkgver=0.27
+pkgrel=1
+pkgdesc='Library for manipulating sets and relations of integer points bounded by linear constraints'
+arch=('x86_64')
+url='https://libisl.sourceforge.io'
+license=('MIT')
+depends=('gmp')
+provides=('isl' 'libisl.so')
+replaces=('isl')
+options=(staticlibs)
+source=("https://libisl.sourceforge.io/isl-${pkgver}.tar.xz")
+b2sums=('88a68de0b7952eb0038d10aa450b0ab25da4f4aa49fcdf70700ec4131d2686a2a2e9a64e5cb8ac0a53ef5d7cff034e60c449b201ba88a24001ad33f0dd17c732')
+
+build() {
+  cd "${srcdir}"/${pkgname#lib}-${pkgver}
+  ./configure --prefix=/usr
+  make
+}
+
+check() {
+  cd "${srcdir}"/${pkgname#lib}-${pkgver}
+  make check || true
+}
+
+package() {
+  cd "${srcdir}"/${pkgname#lib}-${pkgver}
+
+  make DESTDIR="${pkgdir}" install
+
+  install -dm755 "${pkgdir}"/usr/share/gdb/auto-load/usr/lib/
+  mv "${pkgdir}"/usr/lib/libisl.so.*-gdb.py "${pkgdir}"/usr/share/gdb/auto-load/usr/lib/
+
+  install -Dm644 LICENSE "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
+}

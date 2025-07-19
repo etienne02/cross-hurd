@@ -1,0 +1,25 @@
+pkgbase = coreutils
+	pkgdesc = The basic file, shell and text manipulation utilities of the GNU operating system
+	pkgver = 9.7
+	pkgrel = 1
+	url = https://www.gnu.org/software/coreutils/
+	arch = x86_64
+	license = GPL-3.0-or-later
+	license = GFDL-1.3-or-later
+	makedepends = git
+	makedepends = gperf
+	makedepends = python
+	makedepends = wget
+	depends = acl
+	depends = attr
+	depends = glibc
+	depends = gmp
+	depends = libcap
+	depends = openssl
+	source = git+https://git.savannah.gnu.org/git/coreutils.git?signed#tag=v9.7
+	source = git+https://git.savannah.gnu.org/git/gnulib.git
+	validpgpkeys = 6C37DC12121A5006BC1DB804DF6FD971306037D9
+	b2sums = 9c18801f93853f6f78919f79ce84256260e9f5fa5f496e73ac8b9e2c66106cdcd808fe971f6c064cf4f9a97aae4dd4afc97126a8ac89b59497557f89a3734bab
+	b2sums = SKIP
+
+pkgname = coreutils

@@ -1,0 +1,25 @@
+--- a/netbsd/sys/rump/dev/lib/libpci/rumpdev_bus_dma.c
++++ b/netbsd/sys/rump/dev/lib/libpci/rumpdev_bus_dma.c
+@@ -85,6 +85,8 @@
+ static int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
+ 	    bus_size_t, struct vmspace *, int, bus_addr_t *, int *, int);
+ 
++int bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
++			 bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags);
+ /*
+  * Common function for DMA map creation.  May be called by bus-specific
+  * DMA map creation functions.
+@@ -244,6 +246,13 @@
+ 	return (0);
+ }
+ 
++int
++bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
++		     bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags)
++{
++	return (EOPNOTSUPP);
++}
++
+ /*
+  * Common function for loading a DMA map with a linear buffer.  May
+  * be called by bus-specific DMA map load functions.

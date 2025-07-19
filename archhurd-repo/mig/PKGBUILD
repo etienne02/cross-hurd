@@ -1,0 +1,41 @@
+# Maintainer: Etienne Brateau <etienne (dot) brateau (at) gmail (dot) com>
+
+pkgname=mig
+pkgver=1.8
+_commit=3f4b0062963fca5d90fc65c1d7912ecdc21a8fed
+pkgrel=1
+pkgdesc="Mach Interface Generator"
+arch=(x86_64)
+url="http://www.gnu.org/software/hurd/microkernel/mach/mig.html"
+license=('GPL')
+depends=('gnumach-headers' 'glibc')
+source=("git+https://git.savannah.gnu.org/git/hurd/mig.git#commit=$_commit")
+sha256sums=('SKIP')
+validpgpkeys=()
+
+pkgver() {
+  cd $pkgname
+  git describe --long | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+	cd "$pkgname"
+	autoreconf -fi
+}
+
+build() {
+	cd "$pkgname"
+	./configure --prefix=/usr \
+		--libexecdir=/usr/lib
+	make
+}
+
+check() {
+	cd "$pkgname"
+	make -k check
+}
+
+package() {
+	cd "$pkgname"
+	make DESTDIR="$pkgdir/" install
+}

@@ -1,0 +1,13 @@
+We have dropped various source that is useless to use, so ignore cleaning them.
+
+--- a/netbsd/build.sh
++++ b/netbsd/build.sh
+@@ -2767,7 +2767,7 @@
+ 			;;
+ 
+ 		cleandir|obj|sourcesets|syspkgs|params|show-params)
+-			${runcmd} "${makewrapper}" ${parallel} ${op} ||
++			${runcmd} "${makewrapper}" -k ${parallel} ${op} ||
+ 			    bomb "Failed to make ${op}"
+ 			statusmsg "Successful make ${op}"
+ 			;;

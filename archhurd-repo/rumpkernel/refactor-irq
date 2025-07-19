@@ -1,0 +1,305 @@
+--- a/pci-userspace/src-gnu/pci_user-gnu.c
++++ b/pci-userspace/src-gnu/pci_user-gnu.c
+@@ -69,12 +69,10 @@
+ #include <device/device.h>
+ #include "gnumach_U.h"
+ #include "mach_debug_U.h"
+-#include "acpi_U.h"
++#include <hurd/irqhelp.h>
+ #include <mach/vm_param.h>
+ #include <mach.h>
+ 
+-#define RUMP_IRQ_PRIO		2
+-
+ #define PCI_COMMAND		0x04
+ #define PCI_COMMAND_INT_DISABLE	0x400
+ 
+@@ -90,10 +88,7 @@
+ /* number of pci devices */
+ static int numdevs = -1;
+ 
+-static mach_port_t master_host;
+-static mach_port_t master_device;
+-static device_t irq_dev;
+-static device_t acpi_dev;
++mach_port_t master_host;
+ 
+ #define PCI_CFG1_START 0xcf8
+ #define PCI_CFG1_END   0xcff
+@@ -149,23 +144,12 @@
+ 
+ 	MACH_PRINT("pci_userspace_init\n");
+ 
+-	if ((ret = get_privileged_ports (&master_host, &master_device))) {
+-		errno = ret;
++	if (get_privileged_ports (&master_host, NULL))
+ 		err(1, "get_privileged_ports");
+-	}
+-
+-	if ((ret = device_open (master_device, D_READ, "irq", &irq_dev))) {
+-		errno = ret;
+-		err(2, "device_open irq");
+-	}
+-
+-	/* Optional */
+-	if (device_open (master_device, D_READ, "acpi", &acpi_dev)) {
+-		MACH_PRINT("device_open acpi failed... continue\n");
+-		acpi_dev = MACH_PORT_NULL;
+-	}
+ 
++	irqhelp_init();
+ 	pci_system_init ();
++
+ 	struct pci_device_iterator *dev_iter;
+ 	struct pci_device *pci_dev;
+ 	dev_iter = pci_slot_match_iterator_create (NULL);
+@@ -280,115 +264,56 @@
+ 	return 0;
+ }
+ 
+-/* this is a multifunction data structure! */
++struct wrapped {
++	int (*raw_handler)(void *);
++	void *raw_data;
++};
++
++static void
++wrapped_handler(void *arg)
++{
++	struct wrapped *w = (struct wrapped *)arg;
++
++	rumpuser_component_schedule(NULL);
++	w->raw_handler(w->raw_data);
++	rumpuser_component_unschedule();
++
++}
++
++/* enough to peek at gsi */
+ struct irq {
++	void (*handler)(void *);
++	void *context;
++	int gsi;
++};
++
++/* this is a multifunction data structure! */
++struct irq_multi {
+ 	unsigned magic_cookie;
+ 	unsigned bus;
+ 	unsigned dev;
+ 	unsigned fun;
+ 
+-	int (*handler)(void *);
+-	void *data;
++	struct wrapped w;
+ 	int intrline;
+-	mach_port_t irqport;
++	struct irq *irqhelp;
+ 	sem_t sema;
+ 
+-	LIST_ENTRY(irq) entries;
++	LIST_ENTRY(irq_multi) entries;
+ };
+-static LIST_HEAD(, irq) irqs = LIST_HEAD_INITIALIZER(&irqs);
++static LIST_HEAD(, irq_multi) irqs = LIST_HEAD_INITIALIZER(&irqs);
+ 
+ static void *
+ intrthread(void *arg)
+ {
+-	struct irq *irq = arg;
+-	mach_port_t delivery_port;
+-        mach_port_t pset, psetcntl;
+-	int ret;
+-	uint32_t val;
++	struct irq_multi *irq = arg;
+ 
+ 	MACH_PRINT("intrthread\n");
+ 
+ 	rumpuser_component_kthread();
+ 
+-	ret = mach_port_allocate (mach_task_self (), MACH_PORT_RIGHT_RECEIVE,
+-				&delivery_port);
+-	if (ret) {
+-		MACH_PRINT("mach_port_allocate\n");
+-		return 0;
+-	}
+-
+-	irq->irqport = delivery_port;
+-
+-	ret = thread_get_assignment (mach_thread_self (), &pset);
+-	if (ret) {
+-		MACH_PRINT("thread_get_assignment\n");
+-		return 0;
+-	}
+-	ret = host_processor_set_priv (master_host, pset, &psetcntl);
+-	if (ret) {
+-		MACH_PRINT("host_processor_set_priv\n");
+-		return 0;
+-	}
+-	thread_max_priority (mach_thread_self (), psetcntl, 0);
+-	ret = thread_priority (mach_thread_self (), RUMP_IRQ_PRIO, 0);
+-	if (ret) {
+-		MACH_PRINT("thread_priority\n");
+-		return 0;
+-	}
+-
+-	ret = device_intr_register(irq_dev, irq->intrline,
+-				   0, irq->irqport,
+-				   MACH_MSG_TYPE_MAKE_SEND);
+-	if (ret) {
+-		MACH_PRINT("device_intr_register\n");
+-		return 0;
+-	}
+-
+-	int irq_server (mach_msg_header_t *inp, mach_msg_header_t *outp) {
+-		char interrupt[4];
+-
+-		device_intr_notification_t *n = (device_intr_notification_t *) inp;
+-
+-		((mig_reply_header_t *) outp)->RetCode = MIG_NO_REPLY;
+-		if (n->intr_header.msgh_id != DEVICE_INTR_NOTIFY) {
+-			MACH_PRINT("not an interrupt\n");
+-			return 0;
+-		}
+-
+-		/* It's an interrupt not for us. It shouldn't happen. */
+-		/* FIXME: id <-> line now has an indirection, assuming 1:1 */
+-		if (n->id != irq->intrline) {
+-			MACH_PRINT("interrupt not for us\n");
+-			return 0;
+-		}
+-
+-		sprintf(interrupt, "%d\n", n->id);
+-		MACH_PRINT("irq fired: ");
+-		MACH_PRINT(interrupt);
+-
+-		rumpcomp_pci_confread(irq->bus, irq->dev, irq->fun, PCI_COMMAND, &val);
+-		if (val & PCI_COMMAND_INT_DISABLE) {
+-			MACH_PRINT("interrupt disabled!\n");
+-			val &= ~PCI_COMMAND_INT_DISABLE;
+-			rumpcomp_pci_confwrite(irq->bus, irq->dev, irq->fun, PCI_COMMAND, val);
+-		}
+-
+-		MACH_PRINT("k_handle...");
+-		rumpuser_component_schedule(NULL);
+-		irq->handler(irq->data);
+-		rumpuser_component_unschedule();
+-		MACH_PRINT("k_done\n");
+-
+-		device_intr_ack (irq_dev, irq->irqport, MACH_MSG_TYPE_MAKE_SEND);
+-
+-		return 1;
+-        }
+-
+ 	sem_post(&irq->sema);
+-	MACH_PRINT("done init\n");
+-
+-	/* Server loop */
+-	mach_msg_server (irq_server, 0, delivery_port);
++	irqhelp_server_loop(irq->irqhelp);
+ 
+ 	rumpuser_component_kthread_release();
+ 	return NULL;
+@@ -398,8 +323,7 @@
+ rumpcomp_pci_irq_map(unsigned bus, unsigned dev, unsigned fun,
+ 	int intrline, unsigned cookie)
+ {
+-	int ret;
+-	struct irq *irq;
++	struct irq_multi *irq;
+ 	irq = malloc(sizeof(*irq));
+ 	if (irq == NULL)
+ 		return ENOENT;
+@@ -410,15 +334,6 @@
+ 	irq->fun = fun;
+ 	irq->intrline = intrline;
+ 
+-	/* We can do better by reading irq from acpi device, but with fallback */
+-	if (acpi_dev != MACH_PORT_NULL) {
+-		ret = acpi_get_pci_irq (acpi_dev, bus, dev, fun, &irq->intrline);
+-		if (ret) {
+-			MACH_PRINT("acpi_get_pci_irq failed, continue with intrline\n");
+-			irq->intrline = intrline;
+-		}
+-	}
+-
+ 	pthread_mutex_lock(&genericmtx);
+ 	LIST_INSERT_HEAD(&irqs, irq, entries);
+ 	pthread_mutex_unlock(&genericmtx);
+@@ -429,8 +344,8 @@
+ void *
+ rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
+ {
+-	struct irq *irq;
+-	void *cookie2;
++	struct irq_multi *irq;
++	void *cookie2;	
+ 	pthread_t pt;
+ 
+ 	cookie2 = rumpuser_component_unschedule();
+@@ -443,16 +358,34 @@
+ 			break;
+ 	}
+ 	pthread_mutex_unlock(&genericmtx);
+-	if (!irq)
++	if (!irq) {
++		rumpuser_component_schedule(cookie2);
+ 		return NULL;
++	}
+ 
+-	irq->handler = handler;
+-	irq->data = data;
++	irq->w.raw_handler = handler;
++	irq->w.raw_data = data;
++	
++	/* We can do better by trying acpi, but with fallback */
++	irq->irqhelp = irqhelp_install_interrupt_handler(-1, irq->bus, irq->dev, irq->fun, wrapped_handler, &irq->w);
++	if (irq->irqhelp) {
++		irq->intrline = irq->irqhelp->gsi;
++	} else {
++		MACH_PRINT("acpi_get_pci_irq failed, continue with intrline\n");
++		irq->irqhelp = irqhelp_install_interrupt_handler(irq->intrline, -1, -1, -1, wrapped_handler, &irq->w);
++		if (!irq->irqhelp) {
++			MACH_PRINT("irqhelp failed to register handler\n");
++			free(irq);
++			rumpuser_component_schedule(cookie2);
++			return NULL;
++		}
++	}
+ 
+ 	sem_init(&irq->sema, 0, 0);
+ 
+ 	if (pthread_create(&pt, NULL, intrthread, irq) != 0) {
+-		MACH_PRINT("interrupt thread create");
++		MACH_PRINT("interrupt thread create failed\n");
++		irqhelp_remove_interrupt_handler(irq->irqhelp);
+ 		free(irq);
+ 		rumpuser_component_schedule(cookie2);
+ 		return NULL;
+--- a/pci-userspace/src-gnu/Makefile.inc
++++ b/pci-userspace/src-gnu/Makefile.inc
+@@ -3,11 +3,11 @@
+ PCIDIR:=	${.PARSEDIR}
+ .PATH:		${PCIDIR}
+ 
+-RUMPCOMP_USER_SRCS=	pci_user-gnu.c gnumachUser.c mach_debugUser.c acpiUser.c
++RUMPCOMP_USER_SRCS=	pci_user-gnu.c gnumachUser.c mach_debugUser.c
+ RUMPCOMP_USER_CPPFLAGS+=-I${PCIDIR} -I${DESTDIR}/usr/include
+ RUMPCOMP_CPPFLAGS+=	-I${PCIDIR} -I${DESTDIR}/usr/include
+ CPPFLAGS+=		-I${PCIDIR}
+-LDFLAGS+= -lmachuser -Wl,--no-as-needed -lpciaccess -Wl,--as-needed
++LDFLAGS+= -lmachuser -lirqhelp -Wl,--no-as-needed -lpciaccess -Wl,--as-needed
+ MIG=mig
+ 
+ gnumachUser.c:
+@@ -25,11 +25,3 @@
+ 			-user mach_debugUser.c \
+ 			-server /dev/null \
+ 			-header mach_debug_U.h
+-
+-acpiUser.c:
+-	echo '#include <hurd/acpi.defs>' \
+-		| ${CC} -E -x c - -o - \
+-		| $(MIG) -cc cat - /dev/null -subrprefix __ \
+-			-user acpiUser.c \
+-			-server /dev/null \
+-			-header acpi_U.h

@@ -1,0 +1,92 @@
+# Maintainer: Arch Hurd Team
+
+pkgname=hurd
+pkgver=0.9
+_commit=21ca63a9ea91d929a00217fc9496ee89ff89114a
+pkgrel=1
+epoch=
+pkgdesc="The GNU Hurd"
+arch=(x86_64)
+url="http://www.gnu.org/software/hurd/hurd.html"
+license=('GPL-2.0')
+conflict=('linux')  # Just in case
+depends=('gnumach' 'glibc' 'parted')
+optdepends=('libxkbcommon') # TODO missing compose data, either add package for them, either patch console to better handle them missing
+makedepends=('mig' 'rumpkernel' 'parted')
+provides=('fakeroot')
+backup=()
+options=('!strip')
+source=(
+  "git+https://git.savannah.gnu.org/git/hurd/hurd.git#commit=$_commit"
+  "ttys"
+  "hurd-refcounts-assert.patch"
+  "link-rump.patch"
+)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+validpgpkeys=()
+
+pkgver() {
+  cd $pkgname
+  git describe --long | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+  cd "$pkgname"
+  patch -p1 -i "../hurd-refcounts-assert.patch"
+  patch -p1 -i "../link-rump.patch"
+  autoreconf -fi
+
+}
+
+build() {
+  cd "$pkgname"
+  ./configure --prefix=/usr \
+    --sbindir=/usr/bin \
+    --libexecdir=/usr/lib \
+    --sysconfdir=/etc \
+    --disable-profile \
+    --enable-static-progs='ext2fs,iso9660fs,rumpdisk,pci-arbiter,acpi'
+  make
+}
+
+check() {
+  cd "$pkgname"
+  # no test currently
+  # make -k check
+}
+
+package() {
+  cd "$pkgname"
+
+  make DESTDIR="$pkgdir/" install
+
+  install -m 644 $srcdir/ttys $pkgdir/etc/ttys
+
+  install -d $pkgdir/servers
+  install -d $pkgdir/servers/{socket,bus}
+  touch $pkgdir/servers/{acpi,exec,crash-kill,default-pager,password,startup,proc,auth,symlink}
+
+  # system startup scripts are in the initscripts package
+  rm $pkgdir/usr/lib/runsystem $pkgdir/usr/lib/rc
+
+  # uptime gets provided by procps-ng
+  mv "$pkgdir"/usr/bin/uptime{,-hurd}
+  # halt and reboot gets provided by sysvinit
+  mv "$pkgdir"/usr/bin/halt{,-hurd}
+  mv "$pkgdir"/usr/bin/reboot{,-hurd}
+
+  # fix install prefix of /dev & /hurd
+  mv "$pkgdir"/usr/dev "$pkgdir"/dev
+  mv "$pkgdir"/usr/hurd "$pkgdir"/hurd
+
+  # remove files included in hurd-headers
+  rm -rf "$pkgdir"/usr/include
+}
+
+package_headers() {
+  cd "$pkgname"
+
+  make DESTDIR="$pkgdir/" install-headers
+}
+
+# vim:set ts=8 sts=2 sw=2 et:

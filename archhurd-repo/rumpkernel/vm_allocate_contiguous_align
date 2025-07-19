@@ -1,0 +1,32 @@
+---
+ pci-userspace/src-gnu/pci_user-gnu.c |   14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+--- a/pci-userspace/src-gnu/pci_user-gnu.c
++++ b/pci-userspace/src-gnu/pci_user-gnu.c
+@@ -453,12 +453,24 @@ rumpcomp_pci_dmalloc(size_t size, size_t
+ 
+ 	pci_userspace_init();
+ 
++	if (align > PAGE_SIZE) {
++		// TODO: support larger alignment in kernel
++		fprintf(stderr,"warning: dmalloc(%ld) requested with %lx alignment, bumping up size\n", (long) size, (long) align);
++		fflush(stderr);
++		size += align;
++	}
++
+ 	if (vm_allocate_contiguous (master_host, mach_task_self(), &vma, &phys,
+-				    size, 0, 0x100000000, align)) {
++				    size, 0, 0x100000000, PAGE_SIZE)) {
+ 		MACH_PRINT("vm_allocate_contiguous\n");
+ 		return 1;
+ 	}
+ 
++	if (align > PAGE_SIZE) {
++		vma = (vma + align-1) & ~(align-1);
++		phys = (phys + align-1) & ~(align-1);
++	}
++
+ 	*vap = (unsigned long)(vma);
+ 	*pap = (unsigned long long)(phys);
+ 

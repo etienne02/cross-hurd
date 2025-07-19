@@ -1,0 +1,79 @@
+pkgname=dde
+pkgver=r12407.c20479f1f
+# branch 'dde' in hurd/incubator.git
+_commit=34b3bd896ec9b9e4ba298953fc504600dfdc7bff
+pkgrel=1
+pkgdesc="A glue layer to embed Linux device drivers into another environement."
+arch=('x86_64')
+url="https://www.gnu.org/software/hurd/dde.html"
+license=('GPL')
+groups=()
+source=("git+https://git.savannah.gnu.org/git/hurd/incubator.git#commit=$_commit"
+	"gcc-14.patch"
+	"libirqhelp-Add-library.patch")
+sha512sums=('SKIP'
+            '981ede0b4e236f12d5b13a741537df40ed71f66e0464d539e2133c61d69c7fc5ab110c8ce407f3e5f7a54dd4a44fa4c359d45af542eaf0580b16566039b45802'
+		'SKIP')
+
+pkgver() {
+    cd incubator
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare() {
+    cd incubator
+    patch -Np1 -i "$srcdir/gcc-14.patch"
+    patch -Np1 -i "$srcdir/libirqhelp-Add-library.patch"
+}
+
+build() {
+    cd incubator
+    autoreconf -vif
+	hurd_cv_mig_retcode=yes \
+    ./configure --prefix=/usr --disable-profile
+
+    # nasty hack because we don't build full hurd here
+    cp /usr/lib/libports.so ./libports/
+    cp /usr/lib/libshouldbeinlibc.so ./libshouldbeinlibc/
+    cp /usr/lib/libhurd-slab.so ./libhurd-slab/
+    cp /usr/lib/libtrivfs.so ./libtrivfs/
+    cp /usr/lib/libbpf.so ./libbpf/
+    #cp /usr/lib/libfshelp.so ./libfshelp/
+    cp /usr/lib/libihash.so ./libihash/
+    cp /usr/lib/libirqhelp.so ./libirqhelp/
+    cp /usr/lib/libtrivfs.so ./libtrivfs/
+    cp /usr/lib/libmachdev.so ./libmachdev/
+
+    make -C libddekit
+	make -C libmachdevdde
+
+    # copy out headers as they get moved during the build or something - maybe put it into a seperate package beforehand
+    install -d ./libdde_linux26/build/include/x86
+	ln -s x86 libdde_linux26/build/include/amd64
+	ln -s asm-x86 libdde_linux26/build/include/amd64/asm-x86_64
+
+#    cp -r ./libdde_linux26/contrib/include/ ./libdde_linux26-headers
+#    cp -r ./libdde_linux26/build/include/linux-headers/* ./libdde_linux26-headers/
+#
+    make ARCH=amd64 BUILDDIR=build -C libdde_linux26
+}
+
+package() {
+    cd incubator
+    make -C libddekit prefix="$pkgdir/" install
+
+    make ARCH=amd64 BUILDDIR=build -C libdde_linux26 install
+    # TODO: is there a fancy rule for that?
+	mkdir -p "$pkgdir"/usr/share/libdde_linux26/
+    cp -v libdde_linux26/Makeconf* "$pkgdir"/usr/share/libdde_linux26/
+    cp -rv libdde_linux26/mk "$pkgdir"/usr/share/libdde_linux26/mk
+    mkdir "$pkgdir"/usr/lib/
+    cp -v libdde_linux26/lib/src/*.a "$pkgdir"/usr/lib/
+
+    make -C libmachdevdde prefix="$pkgdir/" install
+    #make -C eth-filter prefix="$pkgdir/" install
+
+    mv "$pkgdir"/lib/* "$pkgdir"/usr/lib/
+    rmdir "$pkgdir"/lib/
+    mv "$pkgdir"/include "$pkgdir"/usr/include
+}

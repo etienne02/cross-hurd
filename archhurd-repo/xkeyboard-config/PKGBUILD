@@ -1,0 +1,41 @@
+# Maintainer: Andreas Radke <andyrtr@archlinux.org>
+
+pkgname=xkeyboard-config
+pkgver=2.45
+pkgrel=1
+pkgdesc="X keyboard configuration files"
+arch=(any)
+license=('LicenseRef-xkeyboard-config')
+url="https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config"
+makedepends=('xorg-xkbcomp' 'libxslt' 'python' 'meson') # 'git')
+checkdepends=('python-pytest' 'python-pytest-xdist' 'libxkbcommon')
+provides=('xkbdata')
+replaces=('xkbdata')
+conflicts=('xkbdata')
+# https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config
+source=(https://xorg.freedesktop.org/archive/individual/data/${pkgname}/${pkgname}-${pkgver}.tar.xz{,.sig})
+sha256sums=('169e075a92d957a57787c199e84e359df2931b7196c1c5b4a3d576ee6235a87c'
+            'SKIP')
+validpgpkeys=('FFB4CCD275AAA422F5F9808E0661D98FC933A145') # Sergey Udaltsov <sergey.udaltsov@gmail.com>
+
+build() {
+  arch-meson ${pkgname}-${pkgver} build \
+    -D xkb-base="/usr/share/X11/xkb" \
+    -D compat-rules=true \
+    -D xorg-rules-symlinks=true
+
+  # Print config
+  meson configure build
+
+  ninja -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+ 
+package() {
+  DESTDIR="$pkgdir" ninja -C build install
+  install -m755 -d "${pkgdir}/var/lib/xkb"
+  install -Dt "$pkgdir/usr/share/licenses/$pkgname" -m644 $pkgname-$pkgver/COPYING
+}

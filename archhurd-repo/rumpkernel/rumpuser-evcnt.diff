@@ -1,0 +1,56 @@
+Index: rumpkernel/netbsd/lib/librumpuser/rumpuser_dl.c
+===================================================================
+--- rumpkernel.orig/netbsd/lib/librumpuser/rumpuser_dl.c
++++ rumpkernel/netbsd/lib/librumpuser/rumpuser_dl.c
+@@ -45,7 +45,9 @@ __RCSID("$NetBSD: rumpuser_dl.c,v 1.33 2
+ 
+ #include <sys/types.h>
+ #include <sys/time.h>
++#if defined(HAVE_SYS_EVCNT)
+ #include <sys/evcnt.h>
++#endif
+ 
+ #include <assert.h>
+ 
+@@ -384,6 +386,7 @@ process_object(void *handle,
+ 		assert(sfp == sfp_end);
+ 	}
+ 
++#if defined(HAVE_SYS_EVCNT)
+ 	/* handle link_set_evcnts */
+ 	evp = dlsym(handle, "__start_link_set_evcnts");
+ 	evp_end = dlsym(handle, "__stop_link_set_evcnts");
+@@ -392,6 +395,7 @@ process_object(void *handle,
+ 			doevcntattach(*evp);
+ 		assert(evp == evp_end);
+ 	}
++#endif
+ }
+ 
+ /*
+Index: rumpkernel/netbsd/lib/librumpuser/rumpuser_config.h.in
+===================================================================
+--- rumpkernel.orig/netbsd/lib/librumpuser/rumpuser_config.h.in
++++ rumpkernel/netbsd/lib/librumpuser/rumpuser_config.h.in
+@@ -102,6 +102,9 @@
+ /* Define to 1 if you have the <sys/dkio.h> header file. */
+ #undef HAVE_SYS_DKIO_H
+ 
++/* Define to 1 if you have the <sys/evcnt.h> header file. */
++#undef HAVE_SYS_EVCNT_H
++
+ /* Define to 1 if you have the <sys/param.h> header file. */
+ #undef HAVE_SYS_PARAM_H
+ 
+Index: rumpkernel/netbsd/lib/librumpuser/rumpuser_port.h
+===================================================================
+--- rumpkernel.orig/netbsd/lib/librumpuser/rumpuser_port.h
++++ rumpkernel/netbsd/lib/librumpuser/rumpuser_port.h
+@@ -41,6 +41,7 @@
+ #define HAVE_SYS_DISKLABEL_H 1
+ #define HAVE_SYS_DISK_H 1
+ #define HAVE_SYS_DKIO_H 1
++#define HAVE_SYS_EVCNT_H 1
+ #define HAVE_SYS_PARAM_H 1
+ #define HAVE_SYS_STAT_H 1
+ #define HAVE_SYS_SYSCTL_H 1
