@@ -224,6 +224,24 @@ compile_second_glibc() {
     cd ..
 }
 
+compile_pkgconf() {
+   pushd $SOURCE/$PKGCONF_SRC &&
+   autoreconf -i &&
+   popd &&
+   rm -rf $PKGCONF_SRC.obj &&
+   mkdir -p $PKGCONF_SRC.obj &&
+   pushd $PKGCONF_SRC.obj &&
+   $SOURCE/$PKGCONF_SRC/configure --prefix=$CROSS_TOOLS \
+      --host=$CROSS_HURD_TARGET \
+      --with-system-libdir=$SYS_ROOT/lib \
+	  --with-system-includedir=$SYS_ROOT/include \
+      --with-pkg-config-dir=$SYS_ROOT/lib/pkgconfig &&
+   make -j$PROCS &&
+   make install &&
+   ln -s pkgconf $CROSS_TOOLS/bin/pkg-config
+   popd
+}
+
 compile_pkgconfiglite() {
   # otherwise "ln pkg-config i586-pc-gnu-pkg-config" in the install step fails
   rm -fv $CROSS_TOOLS/bin/*-pkg-config &&

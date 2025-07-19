@@ -1,0 +1,57 @@
+From 521cdd4781a9e2414bd18609409cfa500cff3344 Mon Sep 17 00:00:00 2001
+From: Etienne Brateau <etienne.brateau@gmail.com>
+Date: Sun, 7 Apr 2024 23:55:51 +0200
+Subject: [PATCH] Hurd: define PATH_MAX
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-authored-by: Luca Weiss <luca@z3ntu.xyz>
+---
+ lib/libalpm/alpm.h  | 2 ++
+ src/common/ini.c    | 2 ++
+ src/pacman/pacman.h | 2 ++
+ 3 files changed, 6 insertions(+)
+
+diff --git a/lib/libalpm/alpm.h b/lib/libalpm/alpm.h
+index 268f7213..532e4099 100644
+--- a/lib/libalpm/alpm.h
++++ b/lib/libalpm/alpm.h
+@@ -44,6 +44,8 @@ extern "C" {
+ 
+ #include <alpm_list.h>
+ 
++#define PATH_MAX	4096
++
+ /** @addtogroup libalpm The libalpm Public API
+  *
+  *
+diff --git a/src/common/ini.c b/src/common/ini.c
+index f6b8331b..58d8762d 100644
+--- a/src/common/ini.c
++++ b/src/common/ini.c
+@@ -25,6 +25,8 @@
+ #include "ini.h"
+ #include "util-common.h"
+ 
++#define PATH_MAX	4096
++
+ /**
+  * @brief Parse a pacman-style INI config file.
+  *
+diff --git a/src/pacman/pacman.h b/src/pacman/pacman.h
+index 081f8da8..48a3bc78 100644
+--- a/src/pacman/pacman.h
++++ b/src/pacman/pacman.h
+@@ -22,6 +22,8 @@
+ 
+ #include <alpm_list.h>
+ 
++#define PATH_MAX	4096
++
+ #define PACMAN_CALLER_PREFIX "PACMAN"
+ 
+ /* database.c */
+-- 
+2.44.0
+

@@ -36,6 +36,33 @@ install_flex() {
     cd ..
 }
 
+install_bison() {
+   pushd $SOURCE/$BISON_SRC &&
+   autoreconf -fi &&
+   popd &&
+   mkdir -p $BISON_SRC.obj &&
+   pushd $BISON_SRC.obj &&
+   ac_cv_func_realloc_0_nonnull=yes ac_cv_func_malloc_0_nonnull=yes \
+   $SOURCE/$BISON_SRC/configure --prefix="$SYS_ROOT" \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+   make -j$PROCS &&
+   make -j$PROCS install &&
+   popd
+}
+
+install_diffutils() {
+   rm -rf $DIFFUTILS_SRC.obj &&
+   mkdir -p $DIFFUTILS_SRC.obj &&
+   pushd $DIFFUTILS_SRC.obj &&
+   gl_cv_func_strcasecmp_works=yes \
+   $SOURCE/$DIFFUTILS_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST --host=$CROSS_HURD_TARGET &&
+   make -j$PROCS &&
+   make -j$PROCS install &&
+   popd
+}
+
 install_mig() {
   cd $SOURCE/$GNUMIG_SRC &&
     autoreconf -i &&
@@ -63,8 +90,16 @@ install_zlib() {
     cd ..
 }
 
+install_zlib_ng() {
+  mkdir -p $ZLIB_NG_SRC.obj
+  cd $ZLIB_NG_SRC.obj &&
+    $SOURCE/$ZLIB_NG_SRC/configure --prefix=$SYS_ROOT &&
+    make -j$PROCS &&
+    make -j$PROCS install &&
+    cd ..
+}
+
 install_bzip2() {
-  echo $PATH
   rm -rf $BZIP2_SRC.obj &&
     cp -R $SOURCE/$BZIP2_SRC $BZIP2_SRC.obj &&
     pushd $BZIP2_SRC.obj &&
@@ -87,6 +122,49 @@ install_gpg_error() {
     mkdir -p $GPG_ERROR_SRC.obj &&
     cd $GPG_ERROR_SRC.obj &&
     $SOURCE/$GPG_ERROR_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+    make -j$PROCS &&
+    make -j$PROCS install &&
+    cd ..
+}
+
+install_libksba() {
+  cd $SOURCE/$LIBKSBA_SRC &&
+    ./autogen.sh &&
+    cd - &&
+    mkdir -p $LIBKSBA_SRC.obj &&
+    cd $LIBKSBA_SRC.obj &&
+    $SOURCE/$LIBKSBA_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+    make -j$PROCS &&
+    make -j$PROCS install &&
+    cd ..
+}
+
+install_libassuan() {
+  cd $SOURCE/$LIBASSUAN_SRC &&
+    ./autogen.sh &&
+    cd - &&
+    mkdir -p $LIBASSUAN_SRC.obj &&
+    cd $LIBASSUAN_SRC.obj &&
+    $SOURCE/$LIBASSUAN_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+    make -j$PROCS &&
+    make -j$PROCS install &&
+    cd ..
+}
+
+install_npth() {
+  cd $SOURCE/$NPTH_SRC &&
+    ./autogen.sh &&
+    cd - &&
+    mkdir -p $NPTH_SRC.obj &&
+    cd $NPTH_SRC.obj &&
+    LDFLAGS=-lpthread $SOURCE/$NPTH_SRC/configure --prefix=$SYS_ROOT \
+      --enable-maintainer-mode \
       --build="$HOST" \
       --host="$CROSS_HURD_TARGET" &&
     make -j$PROCS &&
@@ -131,11 +209,10 @@ install_gnumach() {
       --build="$HOST" \
       --exec-prefix=/tmp/throwitaway \
       --enable-kdb \
+      --enable-pae \
       --enable-kmsg \
       --prefix="$SYS_ROOT" \
-      --disable-net-group \
-      --disable-pcmcia-group \
-      --disable-wireless-group \
+      --disable-linux-groups \
       $disable_user32 &&
     make clean &&
     make -j$PROCS gnumach.gz gnumach gnumach.msgids &&
@@ -209,6 +286,7 @@ install_libdde() {
       --build=$HOST \
       --host=$CROSS_HURD_TARGET \
       --prefix=$SYS_ROOT \
+      --without-parted \
       --disable-profile &&
     make -j$PROCS libshouldbeinlibc libihash libhurd-slab libports libirqhelp \
       libiohelp libtrivfs libmachdev libbpf &&
@@ -237,6 +315,7 @@ install_netdde() {
     pushd netdde.obj &&
     make -j$PROCS convert PKGDIR=$SYS_ROOT/share/libdde_linux26 &&
     rm -f Makefile.inc &&
+    CFLAGS="-std=gnu99" \
     make -j$PROCS ARCH=$(get_arch) CC=$CC LINK_PROGRAM=$CC PKGDIR=$SYS_ROOT/share/libdde_linux26 &&
     cp netdde $SYS_ROOT/hurd/ &&
     rm -f Makefile.inc &&
@@ -355,6 +434,10 @@ install_util_linux() {
       --build="$HOST" \
       --host="$CROSS_HURD_TARGET" \
       --disable-makeinstall-chown \
+      --without-ncurses \
+      --without-systemdsystemunitdir \
+      --disable-year2038 \
+      --disable-liblastlog2 \
       --without-ncursesw \
       --disable-makeinstall-setuid &&
     make -j$PROCS &&
@@ -367,6 +450,7 @@ install_grub() {
     cd $GRUB_SRC.obj &&
     # Use gnu17 since the package cannot be built with c23 since it's old.
     CFLAGS="-Wno-error=incompatible-pointer-types -std=gnu17" \
+    ac_cv_header_libdevmapper_h=no \
       $SOURCE/$GRUB_SRC/configure --prefix="$SYS_ROOT" \
       --build=${HOST} \
       --host=${CROSS_HURD_TARGET} \
@@ -434,6 +518,9 @@ install_libdaemon() {
 }
 
 install_libtirpc() {
+  pushd $SOURCE/$LIBTIRPC_SRC &&
+  autoreconf -fi &&
+  popd &&
   create_temp $LIBTIRPC_SRC.obj &&
     pushd $LIBTIRPC_SRC.obj &&
     pushd $SOURCE/$LIBTIRPC_SRC &&
@@ -478,7 +565,8 @@ install_shadow() {
       --cache-file=config.cache \
       --enable-subordinate-ids=no \
       --disable-dependency-tracking \
-      --without-libbsd &&
+      --without-libbsd \
+      CFLAGS=-DLOGIN_NAME_MAX=256 &&
     echo "#define ENABLE_SUBIDS 1" >>config.h &&
     make -j$PROCS && make exec_prefix=$SYS_ROOT -j$PROCS install && cd ..
 }
@@ -489,6 +577,19 @@ install_sed() {
     $SOURCE/$SED_SRC/configure --prefix="$SYS_ROOT" \
       --build="$HOST" \
       --host="$CROSS_HURD_TARGET" &&
+    make -j$PROCS &&
+    make -j$PROCS install &&
+    cd ..
+}
+
+install_isl() {
+  rm -rf $ISL_SRC.obj &&
+    mkdir -p $ISL_SRC.obj &&
+    cd $ISL_SRC.obj &&
+    $SOURCE/$ISL_SRC/configure \
+      --prefix="$SYS_ROOT" \
+      --build=${HOST} \
+      --host=${CROSS_HURD_TARGET} &&
     make -j$PROCS &&
     make -j$PROCS install &&
     cd ..
@@ -599,6 +700,7 @@ install_ncurses() {
       --with-debug \
       --without-ada \
       --with-termlib \
+      --enable-pc-files \
       --enable-overwrite \
       --without-cxx-binding \
       --disable-widec \
@@ -630,6 +732,7 @@ install_ncursesw() {
       --with-debug \
       --without-ada \
       --with-termlib=tinfo \
+      --enable-pc-files \
       --enable-overwrite \
       --without-cxx-binding \
       --disable-stripping \
@@ -658,16 +761,16 @@ install_vim() {
   rm -rf $VIM_SRC.obj &&
     cp -Rv $SOURCE/$VIM_SRC $VIM_SRC.obj &&
     pushd $VIM_SRC.obj &&
-    cat >src/auto/config.cache <<"EOF"
-  vim_cv_getcwd_broken=no
-  vim_cv_memmove_handles_overlap=yes
-  vim_cv_stat_ignores_slash=no
-  vim_cv_terminfo=yes
-  vim_cv_toupper_broken=no
-  vim_cv_tty_group=world
-  vim_cv_tgetent=zero
-EOF
-  CFLAGS="-Wno-error=implicit-function-declaration" \
+  vim_cv_getcwd_broken=no \
+  vim_cv_memmove_handles_overlap=yes \
+  vim_cv_stat_ignores_slash=no \
+  vim_cv_terminfo=yes \
+  vim_cv_toupper_broken=no \
+  vim_cv_tty_group=world \
+  vim_cv_tgetent=zero \
+  vim_cv_timer_create=no \
+  vim_cv_timer_create_works=no \
+  vim_cv_timer_create_with_lrt=no \
     ./configure --build=${HOST} \
     --host=${CROSS_HURD_TARGET} \
     --prefix=${SYS_ROOT} \
@@ -768,8 +871,6 @@ generate_meson_cross_file() {
   cat <<EOF >$cross_file
 [built-in options]
 default_library = 'both'
-
-[paths]
 prefix = '$SYS_ROOT'
 
 [host_machine]
@@ -884,6 +985,39 @@ install_rump() {
     find $OBJ/destdir buildrump.sh/src -type f,l \
       -name "librump*.a" -not -path '*librumpkern_z*' -exec install -v -m 0644 {} $SYS_ROOT/lib \; &&
     popd
+}
+
+
+install_libxkbcommon () {
+   rm -rf $LIBXKBCOMMON_SRC.obj &&
+   meson setup --prefix=$SYS_ROOT $LIBXKBCOMMON_SRC.obj $SOURCE/$LIBXKBCOMMON_SRC/ &&
+   pushd $LIBXKBCOMMON_SRC.obj &&
+   meson install &&
+   popd
+}
+
+install_xkeyboard_config () {
+   rm -rf $KEYBOARD_CONFIG_SRC.obj &&
+   meson setup --prefix=$SYS_ROOT $XKEYBOARD_CONFIG_SRC.obj $SOURCE/$XKEYBOARD_CONFIG_SRC/ &&
+   pushd $XKEYBOARD_CONFIG_SRC.obj &&
+   meson install &&
+   popd
+}
+
+install_libxml2 () {
+   pushd $SOURCE/$LIBXML2_SRC &&
+   autoreconf -fi &&
+   popd
+   rm -rf $LIBXML2_SRC.obj &&
+   mkdir -p $LIBXML2_SRC.obj &&
+   pushd $LIBXML2_SRC.obj &&
+   $SOURCE/$LIBXML2_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET \
+      --without-python &&
+   make -j$PROCS &&
+   make install &&
+   popd
 }
 
 install_findutils() {
@@ -1012,6 +1146,12 @@ install_libidn2() {
     popd
 }
 
+install_publicsuffix_list() {
+    mkdir -p $SYS_ROOT/share/publicsuffix
+    cp $SOURCE/$PUBLICSUFFIX_LIST_SRC/public_suffix_list.dat $SYS_ROOT/share/publicsuffix/
+    ln -sf public_suffix_list.dat $SYS_ROOT/share/publicsuffix/effective_tld_names.dat
+}
+
 install_libpsl() {
   create_temp $LIBPSL_SRC.obj &&
     pushd $LIBPSL_SRC.obj &&
@@ -1028,6 +1168,8 @@ install_curl() {
   create_temp $CURL_SRC.obj &&
     pushd $CURL_SRC.obj &&
     # If NM is set, libtool will fail with a syntax error.
+    ac_cv_func_accept4=no \
+	ac_cv_func_pipe2=no \
     NM="" $SOURCE/$CURL_SRC/configure \
       --build=$HOST \
       --host=$CROSS_HURD_TARGET \
@@ -1128,9 +1270,9 @@ install_perl() {
 }
 
 install_htop() {
-  rm -rf HTOP_SRC.obj &&
-    mkdir -p HTOP_SRC.obj &&
-    pushd HTOP_SRC.obj &&
+  rm -rf $HTOP_SRC.obj &&
+    mkdir -p $HTOP_SRC.obj &&
+    pushd $HTOP_SRC.obj &&
     # TODO: remove -std=gnu17 when Htop is updated.
     CFLAGS="-Wno-error=int-conversion -std=gnu17" $SOURCE/$HTOP_SRC/configure \
       --build=$HOST \
@@ -1143,6 +1285,405 @@ install_htop() {
     popd
 }
 
+install_gettext() {
+   rm -rf $GETTEXT_SRC.obj &&
+   mkdir -p $GETTEXT_SRC.obj &&
+   pushd $GETTEXT_SRC.obj &&
+   $SOURCE/$GETTEXT_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_m4() {
+   rm -rf $M4_SRC.obj &&
+   mkdir -p $M4_SRC.obj &&
+   pushd $M4_SRC.obj &&
+   $SOURCE/$M4_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_libtool() {
+   rm -rf $LIBTOOL_SRC.obj &&
+   mkdir -p $LIBTOOL_SRC.obj &&
+   pushd $LIBTOOL_SRC.obj &&
+   $SOURCE/$LIBTOOL_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_patch() {
+   rm -rf $PATCH_SRC.obj &&
+   mkdir -p $PATCH_SRC.obj &&
+   pushd $PATCH_SRC.obj &&
+   $SOURCE/$PATCH_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_tar() {
+   rm -rf $TAR_SRC.obj &&
+   mkdir -p $TAR_SRC.obj &&
+   pushd $TAR_SRC.obj &&
+   $SOURCE/$TAR_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET \
+      --disable-year2038 &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_xz() {
+   rm -rf $XZ_SRC.obj &&
+   mkdir -p $XZ_SRC.obj &&
+   pushd $XZ_SRC.obj &&
+   $SOURCE/$XZ_SRC/configure --prefix=$SYS_ROOT \
+      --build=$HOST \
+      --host=$CROSS_HURD_TARGET &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_texinfo() {
+   rm -rf $TEXINFO_SRC.obj &&
+   mkdir -p $TEXINFO_SRC.obj &&
+   pushd $TEXINFO_SRC.obj &&
+   texinfo_cv_sys_iconv_converts_euc_cn=yes \
+   $SOURCE/$TEXINFO_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" \
+      --enable-cross-guess &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_help2man() {
+   rm -rf $HELP2MAN_SRC.obj &&
+   mkdir -p $HELPMAN_SRC.obj &&
+   pushd $HELPMAN_SRC.obj &&
+   $SOURCE/$HELP2MAN_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_gperf() {
+   rm -rf $GPERF_SRC.obj &&
+   mkdir -p $GPERF_SRC.obj &&
+   pushd $GPERF_SRC.obj &&
+   $SOURCE/$GPERF_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_libgpg_error() {
+   rm -rf $LIBGPG_ERROR_SRC.obj &&
+   mkdir -p $LIBGPG_ERROR_SRC.obj &&
+   pushd $LIBGPG_ERROR_SRC.obj &&
+   $SOURCE/$LIBGPG_ERROR_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_readline() {
+   rm -rf $READLINE_SRC.obj &&
+   mkdir -p $READLINE_SRC.obj &&
+   pushd $READLINE_SRC.obj &&
+   $SOURCE/$READLINE_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS SHLIB_LIBS=-lncurses &&
+   make install &&
+   popd
+}
+
+install_xxhash() {
+   pushd $SOURCE/$XXHASH_SRC &&
+   make PREFIX=$SYS_ROOT DISPATCH=1 install &&
+   popd
+}
+
+install_rhash() {
+   rm -rf $RHASH_SRC.obj &&
+   mkdir -p $RHASH_SRC.obj &&
+   pushd $RHASH_SRC.obj &&
+   cp -r $SOURCE/$RHASH_SRC/* . &&
+   ./configure --prefix=$SYS_ROOT \
+      --target="$CROSS_HURD_TARGET"  &&
+   make install &&
+   make -C librhash install-lib-headers install-lib-shared install-so-link &&
+   popd
+}
+
+install_elfutils() {
+   rm -rf $ELFUTILS_SRC.obj &&
+   mkdir -p $ELFUTILS_SRC.obj &&
+   pushd $ELFUTILS_SRC.obj &&
+   $SOURCE/$ELFUTILS_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_debugedit() {
+   rm -rf $DEBUGEDIT_SRC.obj &&
+   mkdir -p $DEBUGEDIT_SRC.obj &&
+   pushd $DEBUGEDIT_SRC.obj &&
+   ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes \
+   $SOURCE/$DEBUGEDIT_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET"  &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_lz4() {
+    rm -rf $LZ4_SRC.obj &&
+        mkdir -p $LZ4_SRC.obj &&
+        local build_dir=$PWD/$LZ4_SRC.obj &&
+        pushd $SOURCE/$LZ4_SRC &&
+        generate_meson_cross_file cross-file-$CPU.txt &&
+        meson setup --cross-file cross-file-$CPU.txt build/meson $build_dir &&
+        meson compile -C $build_dir &&
+        meson install -C $build_dir &&
+        popd
+}
+
+install_libssh2() {
+   rm -rf $LIBSSH2_SRC.obj &&
+   mkdir -p $LIBSSH2_SRC.obj &&
+   pushd $LIBSSH2_SRC.obj &&
+   $SOURCE/$LIBSSH2_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_libpcap() {
+   rm -rf $LIBPCAP_SRC.obj &&
+   mkdir -p $LIBPCAP_SRC.obj &&
+   pushd $LIBPCAP_SRC.obj &&
+   $SOURCE/$LIBPCAP_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" \
+      --enable-ipv6 &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_pcre2() {
+   rm -rf $PCRE2_SRC.obj &&
+   mkdir -p $PCRE2_SRC.obj &&
+   pushd $PCRE2_SRC.obj &&
+   $SOURCE/$PCRE2_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" \
+      --enable-jit \
+      --enable-pcre2-16 \
+      --enable-pcre2-32 &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_jsoncpp() {
+  rm -rf $JSONCPP_SRC.obj &&
+    mkdir -p $JSONCPP_SRC.obj &&
+    local build_dir=$PWD/$JSONCPP_SRC.obj &&
+    local build_dir_static=$PWD/$JSONCPP_SRC.static.obj &&
+    pushd $SOURCE/$JSONCPP_SRC &&
+    generate_meson_cross_file cross-file-$CPU.txt &&
+    meson setup --cross-file cross-file-$CPU.txt --default-library shared $build_dir &&
+    meson compile -C $build_dir &&
+    meson install -C $build_dir &&
+    meson setup --cross-file cross-file-$CPU.txt --default-library static $build_dir_static &&
+    meson compile -C $build_dir_static &&
+    meson install -C $build_dir_static &&
+    popd
+}
+
+install_libuv() {
+   rm -rf $LIBUV_SRC.obj &&
+   mkdir -p $LIBUV_SRC.obj &&
+   pushd $LIBUV_SRC.obj &&
+   CFLAGS="-Wno-error=implicit-function-declaration" \
+   $SOURCE/$LIBUV_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_patchelf() {
+   rm -rf $PATCHELF_SRC.obj &&
+   mkdir -p $PATCHELF_SRC.obj &&
+   pushd $PATCHELF_SRC.obj &&
+   $SOURCE/$PATCHELF_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_libmd() {
+   rm -rf $LIBMD_SRC.obj &&
+   mkdir -p $LIBMD_SRC.obj &&
+   pushd $LIBMD_SRC.obj &&
+   $SOURCE/$LIBMD_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_libbsd() {
+   rm -rf $LIBBSD_SRC.obj &&
+   mkdir -p $LIBBSD_SRC.obj &&
+   pushd $LIBBSD_SRC.obj &&
+   $SOURCE/$LIBBSD_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_libffi() {
+   rm -rf $LIBFFI_SRC.obj &&
+   mkdir -p $LIBFFI_SRC.obj &&
+   pushd $LIBFFI_SRC.obj &&
+   $SOURCE/$LIBFFI_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" \
+      --disable-exec-static-tramp \
+      --disable-multi-os-directory \
+      --disable-static \
+      --enable-pax_emutramp &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_nettle() {
+   rm -rf $NETTLE_SRC.obj &&
+   mkdir -p $NETTLE_SRC.obj &&
+   pushd $NETTLE_SRC.obj &&
+   $SOURCE/$NETTLE_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" \
+      --disable-static &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_libtasn1() {
+   rm -rf $LIBTASN1_SRC.obj &&
+   mkdir -p $LIBTASN1_SRC.obj &&
+   pushd $LIBTASN1_SRC.obj &&
+   $SOURCE/$LIBTASN1_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_gnutls() {
+   rm -rf $GNUTLS_SRC.obj &&
+   mkdir -p $GNUTLS_SRC.obj &&
+   pushd $GNUTLS_SRC.obj &&
+   $SOURCE/$GNUTLS_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" \
+      --disable-static \
+      --without-zstd \
+      --without-p11-kit \
+      --without-brotli \
+      --without-leancrypto \
+      --without-tpm2 \
+      --without-tpm \
+      --without-trousers-lib \
+      --enable-openssl-compatibility &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_nspr() {
+   rm -rf $NSPR_SRC.obj &&
+   mkdir -p $NSPR_SRC.obj &&
+   pushd $NSPR_SRC.obj &&
+   $SOURCE/$NSPR_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" \
+      --disable-debug \
+	  --enable-64bit \
+      --enable-optimize &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_attr() {
+   rm -rf $ATTR_SRC.obj &&
+   mkdir -p $ATTR_SRC.obj &&
+   pushd $ATTR_SRC.obj &&
+   $SOURCE/$ATTR_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
+install_nsl() {
+   pushd $SOURCE/$NSL_SRC &&
+   autoreconf -fi &&
+   popd
+   rm -rf $NSL_SRC.obj &&
+   mkdir -p $NSL_SRC.obj &&
+   pushd $NSL_SRC.obj &&
+   $SOURCE/$NSL_SRC/configure --prefix=$SYS_ROOT \
+      --build="$HOST" \
+      --host="$CROSS_HURD_TARGET" &&
+   make -j$PROCS &&
+   make install &&
+   popd
+}
+
 install_minimal_system() {
   install_libxcrypt &&
     install_libpciaccess &&
@@ -1153,6 +1694,9 @@ install_minimal_system() {
     install_bzip2 &&
     install_gnumach &&
     install_gpg_error &&
+    install_libksba &&
+    install_libassuan &&
+    install_npth &&
     install_gcrypt &&
     install_ncurses &&
     install_ncursesw &&
@@ -1183,8 +1727,9 @@ install_more_shell_tools() {
   install_grep &&
     install_gawk &&
     install_less &&
-    install_file &&
-    install_htop
+    install_file #&&
+	# Fails
+    #install_htop
 }
 
 install_networking_tools() {
@@ -1205,13 +1750,48 @@ install_development_tools() {
     install_mig &&
     install_binutils &&
     install_gmp &&
+    install_isl &&
     install_mpfr &&
     install_mpc &&
     install_gcc &&
     install_make &&
     install_perl &&
     install_git &&
-    install_gdb
+    #install_gdb &&
+    install_diffutils &&
+    install_gettext &&
+    install_m4 &&
+    install_bison &&
+    install_libtool &&
+    install_patch &&
+    install_tar &&
+    install_xz &&
+    install_lz4 &&
+    install_help2man &&
+    install_texinfo &&
+    install_gperf &&
+    install_xxhash &&
+    install_rhash &&
+    install_readline &&
+	# elf utils fails: tries to use a LINUX value
+    #install_elfutils &&
+    #install_debugedit &&
+    install_libssh2 &&
+    install_pcre2 &&
+    install_libuv &&
+    install_libxml2 &&
+    install_patchelf &&
+    install_publicsuffix_list &&
+    install_libmd &&
+    install_libbsd &&
+    install_libffi &&
+    install_libtasn1 &&
+    install_nettle &&
+    install_gnutls &&
+    install_nspr &&
+    install_attr &&
+    install_nsl &&
+    install_zlib_ng
 }
 
 install_editors() {
