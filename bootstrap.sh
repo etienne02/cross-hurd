@@ -13,7 +13,7 @@ mkdir -p $BUILD_ROOT/bootstrap &&
   cd $BUILD_ROOT/bootstrap &&
   compile_binutils &&
   compile_gcc &&
-  compile_pkgconfiglite &&
+  compile_pkgconf &&
   install_gnumach_headers &&
   install_gnumig &&
   install_hurd_headers &&

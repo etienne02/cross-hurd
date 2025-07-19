@@ -7,7 +7,6 @@ FLEX_URL=https://github.com/westes/flex/releases/download/v$FLEX_VERSION/$FLEX_P
 ZLIB_URL=http://zlib.net/"$ZLIB_PKG"
 BZIP2_URL=https://sourceware.org/pub/bzip2/$BZIP2_PKG
 E2FSPROGS_URL=https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v"$E2FSPROGS_VERSION"/"$E2FSPROGS_PKG"
-PKGCONFIGLITE_URL=http://downloads.sourceforge.net/project/pkgconfiglite/"$PKGCONFIGLITE_VERSION"/"$PKGCONFIGLITE_PKG"
 LIBUUID_URL=http://downloads.sourceforge.net/project/libuuid/"$LIBUUID_PKG"
 UTIL_LINUX_URL=https://www.kernel.org/pub/linux/utils/util-linux/v$UTIL_LINUX_MAJOR_VERSION/"$UTIL_LINUX_PKG"
 SHADOW_URL=https://github.com/shadow-maint/shadow/releases/download/"$SHADOW_VERSION"/"$SHADOW_PKG"
@@ -29,6 +28,53 @@ INETUTILS_URL=https://ftp.gnu.org/gnu/inetutils/$INETUTILS_PKG
 WGET_URL=https://ftp.gnu.org/gnu/wget/$WGET_PKG
 PERL_CROSS_URL=https://github.com/arsv/perl-cross/raw/releases/$PERL_CROSS_PKG
 PERL_URL=https://www.cpan.org/src/5.0/$PERL_PKG
+
+MESON_URL=https://github.com/mesonbuild/meson/releases/download/$MESON_VERSION/$MESON_PKG
+BISON_URL=https://ftp.gnu.org/gnu/bison/$BISON_PKG
+PACMAN_URL=https://gitlab.archlinux.org/pacman/pacman/-/releases/v$PACMAN_VERSION/downloads/$PACMAN_PKG
+PYTHON_URL=https://www.python.org/ftp/python/$PYTHON_VERSION/$PYTHON_PKG
+GDB_URL=https://ftp.gnu.org/gnu/gdb/$GDB_PKG
+M4_URL=https://ftp.gnu.org/gnu/m4/$M4_PKG
+LIBTOOL_URL=https://ftp.gnu.org/gnu/libtool/$LIBTOOL_PKG
+AUTOCONF_URL=https://ftp.gnu.org/gnu/autoconf/$AUTOCONF_PKG
+AUTOCONF_ARCHIVE_URL=https://ftp.gnu.org/gnu/autoconf-archive/$AUTOCONF_ARCHIVE_PKG
+AUTOMAKE_URL=https://ftp.gnu.org/gnu/automake/$AUTOMAKE_PKG
+NINJA_URL=https://github.com/ninja-build/ninja/archive/v$NINJA_VERSION/$NINJA_PKG
+PATCH_URL=https://ftp.gnu.org/gnu/patch/$PATCH_PKG
+TAR_URL=https://ftp.gnu.org/gnu/tar/$TAR_PKG
+XZ_URL=https://github.com/tukaani-project/xz/releases/download/v$XZ_VERSION/$XZ_PKG
+LIBDAEMON_URL=https://0pointer.de/lennart/projects/libdaemon/$LIBDAEMON_PKG
+XKEYBOARD_CONFIG_URL=http://www.x.org/releases/individual/data/xkeyboard-config/$XKEYBOARD_CONFIG_PKG
+PKGCONF_URL=https://distfiles.ariadne.space/pkgconf/$PKGCONF_PKG
+LIBARCHIVE_URL=https://github.com/libarchive/libarchive/releases/download/v$LIBARCHIVE_VERSION/$LIBARCHIVE_PKG
+OPENSSL_URL=https://www.openssl.org/source/$OPENSSL_PKG
+CURL_URL=https://curl.se/download/$CURL_PKG
+LIBXML2_URL=https://gitlab.gnome.org/GNOME/libxml2/-/archive/$LIBXML2_VERSION/$LIBXML2_PKG
+DIFFUTILS_URL=https://ftp.gnu.org/gnu/diffutils/$DIFFUTILS_PKG
+TEXINFO_URL=https://ftp.gnu.org/gnu/texinfo/$TEXINFO_PKG
+GZIP_URL=https://ftp.gnu.org/pub/gnu/gzip/$GZIP_PKG
+SUDO_URL=https://www.sudo.ws/sudo/dist/$SUDO_PKG
+HELP2MAN_URL=https://ftp.gnu.org/gnu/help2man/$HELP2MAN_PKG
+GIT_URL=https://www.kernel.org/pub/software/scm/git/$GIT_PKG
+LIBPCAP_URL=https://www.tcpdump.org/release/$LIBPCAP_PKG
+GETTEXT_URL=https://ftp.gnu.org/pub/gnu/gettext/$GETTEXT_PKG
+GPERF_URL=https://ftp.gnu.org/pub/gnu/gperf/$GPERF_PKG
+PO4A_URL=https://github.com/mquinson/po4a/releases/download/v$PO4A_VERSION/$PO4A_PKG
+READLINE_URL=https://ftp.gnu.org/gnu/readline/$READLINE_PKG
+PERL_BUILD_URL=https://search.cpan.org/CPAN/authors/id/L/LE/LEONT/$PERL_BUILD_PKG
+PERL_INC_LATEST_URL=https://search.cpan.org/CPAN/authors/id/D/DA/DAGOLDEN/$PERL_INC_LATEST_PKG
+ELFUTILS_URL=https://sourceware.org/ftp/elfutils/$ELFUTILS_VERSION/$ELFUTILS_PKG
+XXHASH_URL=https://github.com/Cyan4973/xxHash/archive/refs/tags/v$XXHASH_VERSION.tar.gz
+DEBUGEDIT_URL=https://sourceware.org/ftp/debugedit/$DEBUGEDIT_VERSION/$DEBUGEDIT_PKG
+LZ4_URL=https://github.com/lz4/lz4/releases/download/v$LZ4_VERSION/$LZ4_PKG
+ZSTD_URL=https://github.com/facebook/zstd/releases/download/v$ZSTD_VERSION/$ZSTD_PKG
+CMAKE_URL=https://gitlab.kitware.com/cmake/cmake/-/archive/v$CMAKE_VERSION/$CMAKE_PKG
+LIBSSH2_URL=https://www.libssh2.org/download/$LIBSSH2_PKG
+PCRE2_URL=https://github.com/PCRE2Project/pcre2/releases/download/$PCRE2_SRC/$PCRE2_PKG
+EXPAT_URL=https://github.com/libexpat/libexpat/releases/download/R_$EXPAT_TAG_VERSION/$EXPAT_PKG
+RHASH_URL=https://github.com/rhash/RHash/archive/refs/tags/v$RHASH_VERSION.tar.gz
+JSONCPP_URL=https://github.com/open-source-parsers/jsoncpp/archive/$JSONCPP_VERSION/$JSONCPP_PKG
+LIBUV_URL=https://github.com/libuv/libuv/archive/refs/tags/v$LIBUV_VERSION.tar.gz
 
 unpack() {
   if [ -d "$3" ]; then
@@ -129,6 +175,7 @@ download_hurd() {
   download_from_git hurd git://git.savannah.gnu.org/hurd/hurd.git &&
     pushd hurd &&
     apply_patch $SCRIPT_DIR/patches/hurd/link-rump.patch 1 &&
+    apply_patch $SCRIPT_DIR/patches/hurd/hurd-refcounts-assert.patch 1 &&
     popd
 }
 
@@ -182,6 +229,7 @@ download_glibc() {
     apply_patch $SCRIPT_DIR/patches/glibc/unsubmitted-getaux_at_secure.diff 1 &&
     apply_patch $SCRIPT_DIR/patches/glibc/tg-mach-hurd-link.diff 1 &&
     apply_patch $SCRIPT_DIR/patches/glibc/0001-dirent-set-d_name-size-to-256.patch 1 &&
+    apply_patch $SCRIPT_DIR/patches/glibc/local-intr-msg-clobber.diff 1 &&
     cd ..
 }
 
@@ -193,11 +241,7 @@ download_gcc() {
 }
 
 download_sed() {
-  download $SED_PKG $SED_URL &&
-    if [ -d "$SED_SRC" ]; then
-      return 0
-    fi
-  unpack xf $SED_PKG $SED_SRC
+  download_package $SED_URL
 }
 
 download_ncurses() {
@@ -223,62 +267,66 @@ download_libtirpc() {
     popd
 }
 
+download_gmp() {
+  download $GMP_PKG $GMP_URL &&
+  unpack jxf $GMP_PKG $GMP_SRC &&
+  pushd $GMP_SRC &&
+  apply_patch $SCRIPT_DIR/patches/gmp/gmp-gcc-15.patch 1 &&
+  popd
+}
+
+download_flex() {
+  download_package $FLEX_URL &&
+  pushd $FLEX_SRC &&
+  apply_patch $SCRIPT_DIR/patches/flex/malloc-decl.diff 1 &&
+  popd
+}
+
+download_shadow() {
+  download $SHADOW_PKG $SHADOW_URL &&
+  unpack Jxf $SHADOW_PKG $SHADOW_SRC &&
+  pushd $SHADOW_SRC &&
+  apply_patch $SCRIPT_DIR/patches/shadow/0001-Fix-build-of-idmapping.c-on-hurd.patch 1 &&
+  popd
+}
+
 download_make() {
-  download $MAKE_PKG $MAKE_URL &&
-    if [ -d "$MAKE_SRC" ]; then
-      return 0
-    fi
-  unpack xf $MAKE_PKG $MAKE_SRC
+  download_package $MAKE_URL
 }
 
 download_grep() {
-  download $GREP_PKG $GREP_URL &&
-    if [ -d "$GREP_SRC" ]; then
-      return 0
-    fi
-  unpack xf $GREP_PKG $GREP_SRC
-  pushd $GREP_SRC &&
-    apply_patch $SCRIPT_DIR/patches/grep/gnulib-hurd-x86_64.patch 1 &&
-    popd
+  download_package $GREP_URL
+}
+
+download_gawk() {
+  download_package $GAWK_URL
 }
 
 download_less() {
-  download $LESS_PKG $LESS_URL &&
-    unpack xf $LESS_PKG $LESS_SRC
+  download_package $LESS_URL
 }
 
 download_dash() {
-  download $DASH_PKG $DASH_URL &&
-    if [ -d $DASH_SRC ]; then
-      return 0
-    fi
-  unpack xf $DASH_PKG $DASH_SRC
+  download_package $DASH_URL &&
   pushd $DASH_SRC &&
     apply_patch $SCRIPT_DIR/patches/dash/dash-path-max.patch 1 &&
     popd
 }
 
 download_libpciaccess() {
-  download $LIBPCIACCESS_PKG $LIBPCIACCESS_URL &&
-    if [ -d $LIBPCIACCESS_SRC ]; then
-      return 0
-    fi
-  unpack xf $LIBPCIACCESS_PKG $LIBPCIACCESS_SRC
+  download_package $LIBPCIACCESS_URL
 }
 
 download_parted() {
   download_package $PARTED_URL &&
-    pushd $PARTED_SRC &&
+  pushd $PARTED_SRC &&
+    apply_patch $SCRIPT_DIR/patches/parted/fix-do_version-declaration.patch 1 &&
     apply_patch $SCRIPT_DIR/patches/parted/parted-3.6-gcc15.patch 1 &&
-    popd
+  popd
 }
 
 download_dmidecode() {
-  download $DMIDECODE_PKG $DMIDECODE_URL &&
-    if [ -d $DMIDECODE_SRC ]; then
-      return 0
-    fi
-  unpack xf $DMIDECODE_PKG $DMIDECODE_SRC
+  download_package $DMIDECODE_URL
 }
 
 download_findutils() {
@@ -290,8 +338,7 @@ download_findutils() {
 }
 
 download_iana_etc() {
-  download $IANA_ETC_PKG $IANA_ETC_URL &&
-    unpack xf $IANA_ETC_PKG $IANA_ETC_SRC
+  download_package $IANA_ETC_URL
 }
 
 download_inetutils() {
@@ -299,13 +346,110 @@ download_inetutils() {
 }
 
 download_wget() {
-  download $WGET_PKG $WGET_URL &&
-    unpack xf $WGET_PKG $WGET_SRC
+  download_package $WGET_URL
 }
 
 download_perl() {
-  download $PERL_CROSS_PKG $PERL_CROSS_URL &&
-    unpack xf $PERL_CROSS_PKG $PERL_CROSS_SRC &&
-    download $PERL_PKG $PERL_URL &&
-    unpack xf $PERL_PKG $PERL_SRC
+  download_package $PERL_CROSS_URL &&
+    download_package $PERL_URL
+}
+
+download_sed () {
+	download_package $SED_URL
+}
+
+download_patch () {
+   download_package $PATCH_URL &&
+   pushd $PATCH_SRC &&
+   apply_patch $SCRIPT_DIR/patches/patch/path_max.patch  1 &&
+   popd
+}
+
+download_xxhash () {
+  if [ -d $XXHASH_SRC ]; then
+    return 0
+  fi
+  wget $XXHASH_URL &&
+  mv "v${XXHASH_VERSION}.tar.gz" $XXHASH_PKG
+  unpack xf $XXHASH_PKG $XXHASH_SRC
+}
+
+download_rhash () {
+  if [ -d $RHASH_SRC ]; then
+    return 0
+  fi
+  wget $RHASH_URL &&
+  mv "v${RHASH_VERSION}.tar.gz" $RHASH_PKG &&
+  unpack xf $RHASH_PKG $RHASH_SRC &&
+  pushd $RHASH_SRC &&
+  apply_patch $SCRIPT_DIR/patches/rhash/0001-Add-GNU-target-platform-support-for-configure-argume.patch  1 &&
+  apply_patch $SCRIPT_DIR/patches/rhash/0002-Fix-the-extension-of-the-shared-library-for-GNU-Hurd.patch  1 &&
+  popd
+}
+
+download_libuv () {
+  if [ -d $LIBUV_SRC ]; then
+    return 0
+  fi
+  wget $LIBUV_URL &&
+  mv "v${LIBUV_VERSION}.tar.gz" $LIBUV_PKG &&
+  unpack xf $LIBUV_PKG $LIBUV_SRC &&
+  pushd $LIBUV_SRC &&
+  ./autogen.sh
+  popd
+}
+
+
+download_pacman () {
+   download $PACMAN_PKG $PACMAN_URL &&
+   if [ -d $PACMAN_SRC ]; then
+      return 0
+   fi
+   unpack xf $PACMAN_PKG $PACMAN_SRC &&
+   pushd $PACMAN_SRC &&
+   apply_patch $SCRIPT_DIR/patches/pacman/0001-Hurd-define-PATH_MAX.patch  1 &&
+   #apply_patch $SCRIPT_DIR/patches/pacman/0001-makepkg-Clear-ERR-trap-before-trying-to-restore-it.patch  1 &&
+   apply_patch $SCRIPT_DIR/patches/pacman/0002-Hurd-define-PIPE_BUF.patch  1 &&
+   apply_patch $SCRIPT_DIR/patches/pacman/0003-Hurd-use-FAKED_MODE-instead-of-FAKEROOTKEY-for-faker.patch  1 &&
+   apply_patch $SCRIPT_DIR/patches/pacman/0004-Hurd-use-V-for-fakeroot-version-output.patch  1 &&
+   popd
+}
+
+download_python_bootstrap() {
+  download_from_git $PYTHON_BOOTSTRAP_SRC https://gitlab.archlinux.org/archlinux/python-bootstrap.git 
+  pushd $PYTHON_BOOTSTRAP_SRC &&
+  git submodule update --init --recursive &&
+  popd
+}
+
+download_publicsuffix_list() {
+  download_from_git $PUBLICSUFFIX_LIST_SRC https://github.com/publicsuffix/list.git
+}
+
+download_sqlite() {
+  download $SQLITE_PKG $SQLITE_URL &&
+   if [ -d $SQLITE_SRC ]; then
+      return 0
+   fi
+  unzip -qq $SQLITE_PKG
+}
+
+download_libxslt() {
+  download_from_git $LIBXSLT_SRC $LIBXSLT_URL
+}
+
+download_gyp() {
+  download_from_git $GYP_SRC $GYP_URL
+}
+
+download_nspr() {
+  download $NSPR_PKG $NSPR_URL &&
+   if [ -d $NSPR_SRC ]; then
+      return 0
+   fi
+  unzip -qq $NSPR_PKG
+}
+
+download_m4() {
+  download_package $M4_URL
 }

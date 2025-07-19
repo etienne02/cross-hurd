@@ -88,14 +88,16 @@ fi
 if test -d /var/run; then
     (cd /var/run && {
         rm -rf -- *
-        cp /dev/null utmp
+        touch utmp
         chmod 644 utmp
     })
 fi
 echo done
 
 # This file must exist for e2fsck to work. XXX
-touch /var/run/mtab
+#touch /var/run/mtab
+# needs this file to be a real mtab otherwise mountspoints cannot be detected automatically
+ln -s /proc/mounts /var/run/mtab
 
 #echo -n restoring pty permissions...
 #chmod 666 /dev/tty[pqrs]*
