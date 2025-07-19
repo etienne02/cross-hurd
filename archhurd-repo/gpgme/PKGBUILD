@@ -1,0 +1,67 @@
+# Maintainer: Tobias Powalowski <tpowa@archlinux.org>
+# Contributor: Roman Kyrylych <roman@archlinux.org>
+# Contributor: Sarah Hay <sarah@archlinux.org>
+
+pkgname=gpgme
+pkgver=2.0.1
+pkgrel=3
+pkgdesc='C wrapper library for GnuPG'
+arch=('x86_64')
+url='https://www.gnupg.org/related_software/gpgme/'
+license=(
+  GPL-2.0-or-later
+  LGPL-2.0-or-later
+  LGPL-2.1-or-later
+  MIT)
+depends=(
+  'glibc'
+  'libassuan' 'libassuan.so'
+  'libgpg-error' #'libgpg-error.so'
+  'gnupg>=2')
+makedepends=('git')
+provides=('libgpgme.so')
+options=('!emptydirs')
+validpgpkeys=('6DAA6E64A76D2840571B4902528897B826403ADA'  # Werner Koch (dist signing 2020)
+              'AC8E115BF73E2D8D47FA9908E98E9B2D19C6C8BD') # Niibe Yutaka (GnuPG Release Key)
+source=("git+https://dev.gnupg.org/source/gpgme.git#tag=${pkgname}-${pkgver}?signed")
+sha256sums=('8d39a1eec4ccf3c05a68349800253c30c079c3468b36a7537920e4d441d5945c')
+
+prepare() {
+  cd ${pkgname}
+
+  sed -i 's/-unknown//' autogen.sh
+  autoreconf -fi
+}
+
+build() {
+  cd ${pkgname}
+
+  ./configure \
+    --prefix=/usr \
+    --disable-fd-passing \
+    --disable-static \
+    --disable-gpgsm-test
+
+  # prevent excessive overlinking due to libtool
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make
+}
+
+check() {
+  cd ${pkgname}
+
+  # this test fails with gnupg (FS#66572)
+  sed -i 's#"t-keylist-secret",##' tests/json/t-json.c
+
+  make check
+}
+
+package() {
+  cd ${pkgname}
+
+  make DESTDIR="${pkgdir}" install
+  # that is not used, no?!
+  rm "${pkgdir}"/usr/lib/pkgconfig/gpgme-glib.pc
+
+  install -vDm 644 LICENSES "$pkgdir/usr/share/licenses/$pkgname/MIT.txt"
+}

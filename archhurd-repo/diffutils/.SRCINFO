@@ -1,0 +1,24 @@
+pkgbase = diffutils
+	pkgdesc = Utility programs used for creating patch files
+	pkgver = 3.12
+	pkgrel = 2
+	url = https://www.gnu.org/software/diffutils
+	arch = x86_64
+	license = GPL-3.0-or-later
+	makedepends = git
+	makedepends = gperf
+	makedepends = help2man
+	makedepends = python
+	makedepends = wget
+	depends = glibc
+	source = git+https://git.savannah.gnu.org/git/diffutils.git#tag=v3.12?signed
+	source = git+https://git.savannah.gnu.org/git/gnulib.git
+	source = https://ftp.gnu.org/gnu/diffutils/diffutils-3.12.tar.gz
+	source = https://ftp.gnu.org/gnu/diffutils/diffutils-3.12.tar.gz.sig
+	validpgpkeys = 155D3FC500C834486D1EEA677FD9FCCB000BEEEE
+	b2sums = d7e72109db2b1607c2d17253df9232555d0dd3a87a2d1a1f90fac4ecdc4035a538c08078c741eea987eb37b0ab8c772553abddbc986fbeeda186fff7d2ff31da
+	b2sums = SKIP
+	b2sums = 3c1c75257d919ae08e279ea33ccde0b537d9d9a9e48a4ac73e691cc48877b69281361a9ad18ca4b8a9ffa02030d1fdd6b25bd5c0d3c81779d14f279b1bab5834
+	b2sums = SKIP
+
+pkgname = diffutils

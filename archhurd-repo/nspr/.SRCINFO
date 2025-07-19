@@ -1,0 +1,19 @@
+pkgbase = nspr
+	pkgdesc = Netscape Portable Runtime
+	pkgver = 4.38.2
+	pkgrel = 1
+	url = https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSPR
+	arch = x86_64
+	license = MPL-2.0
+	makedepends = mercurial
+	makedepends = zip
+	depends = glibc
+	depends = sh
+	source = hg+https://hg.mozilla.org/projects/nspr#tag=NSPR_4_38_2_RTM
+	source = 0001-linux-prefer-GCC-provided-atomics-to-asssembly-imple.patch
+	source = 0002-configure.in-Remove-assembly-files-from-build.patch
+	b2sums = 96a15b7d2ff97e6b7ad6ea42c3e2494e504c7c9a34bd8206a246e77f9010d33bbad77699450f563773e81c4a9267e79e42dd1b275f7db767f0267c4349fc74d5
+	b2sums = 50a9d787e3a5c569472a47efbde1a0ceb3f1be97b2b2f29148f010c3eca9c1f94e7045c58d49213b61e3677550bc0af01245a8daf9ca4580b94f29658e0b8e75
+	b2sums = 337f76eafca696b25e7c00076837a0971f3eaed1e15f009eac34a077e5c5f1d56664db6dd4921151ed97f40149b7b922eb396ef2443bcaee72e3e9aa46fe9221
+
+pkgname = nspr

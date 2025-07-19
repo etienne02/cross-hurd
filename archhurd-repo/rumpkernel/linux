@@ -1,0 +1,38 @@
+Since we use nostdinc we don't rely on Linux definitions.
+
+---
+ src/sys/external/bsd/libnv/dist/nv_compat.h                |    4 
+ src/sys/net/bpfjit.h                                       |    2 
+ obj/hurd-debian/rumpkernel/netbsd/tooldir/bin/nbhost-mkdep    |  267 ----------
+ obj/hurd-debian/rumpkernel/netbsd/tools/host-mkdep/host-mkdep |  267 ----------
+ 4 files changed, 3 insertions(+), 537 deletions(-)
+
+--- a/netbsd/sys/net/bpfjit.h
++++ b/netbsd/sys/net/bpfjit.h
+@@ -39,7 +39,7 @@
+ 
+ #include <sys/types.h>
+ 
+-#ifdef __linux
++#if 0 //def __linux
+ #include <pcap-bpf.h>
+ #else
+ #include <net/bpf.h>
+--- a/netbsd/sys/external/bsd/libnv/dist/nv_compat.h
++++ b/netbsd/sys/external/bsd/libnv/dist/nv_compat.h
+@@ -57,13 +57,13 @@
+ 	    __attribute__((__format__ (__printf__, fmtarg, firstvararg)))
+ #endif
+ 
+-#ifdef __linux__
++#if 0 //def __linux__
+ #include <endian.h>
+ #else
+ #include <sys/endian.h>
+ #endif
+ 
+-#ifdef __linux__
++#if 0 //def __linux__
+ static inline uint32_t
+ be32dec(const void *buf)
+ {

@@ -1,0 +1,61 @@
+# Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Contributor: Andrea Scarpino <andrea@archlinux.org>
+# Contributor: Pierre Schmitz <pierre@archlinux.de>
+
+pkgname=cmake
+pkgver=4.3.2
+pkgrel=1
+pkgdesc='A cross-platform open-source make system'
+arch=('x86_64')
+url="https://www.cmake.org/"
+license=('BSD-3-Clause')
+depends=(cppdap
+         curl
+         expat
+         glibc
+         jsoncpp
+         libarchive
+         libgcc
+         libstdc++
+         libuv
+         ncurses
+         rhash
+         zlib)
+makedepends=(emacs
+             git
+             nlohmann-json
+             python-sphinx
+             qt6-base)
+optdepends=(
+  'make: for unix Makefile generator'
+  'ninja: for ninja generator'
+  'qt6-base: cmake-gui'
+)
+source=(git+https://gitlab.kitware.com/cmake/cmake.git#tag=v$pkgver?signed)
+sha512sums=('24895221506a3c294cb1c5ae947e92a0b7a1de6fc19a3a67bd313c8258b19fd588e2389a4343fe218114b1409ca72d8b2d5585d9089c6dee538c6804b6aacaab')
+validpgpkeys=(CBA23971357C2E6590D9EFD3EC8FEF3A7BFB4EDA) # Brad King <brad.king@kitware.com>
+
+prepare() {
+  cd $pkgname
+  git cherry-pick -n 261b7b933c6604095687d473503e24bae6ec0d6f # Support LUA 5.5
+
+  rm -fr .git # Avoid dirty version number
+}
+
+build() {
+  cd ${pkgname}
+  ./bootstrap --prefix=/usr \
+    --mandir=/share/man \
+    --docdir=/share/doc/cmake \
+    --datadir=/share/cmake \
+    --system-libs \
+    --parallel=$(/usr/bin/getconf _NPROCESSORS_ONLN)
+  make
+}
+
+package() {
+  cd ${pkgname}
+  make DESTDIR="${pkgdir}" install
+
+  install -Dm644 LICENSE.rst -t "${pkgdir}"/usr/share/licenses/$pkgname
+}

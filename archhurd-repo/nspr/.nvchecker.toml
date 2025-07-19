@@ -1,0 +1,4 @@
+[nspr]
+source = "jq"
+url = "https://hg.mozilla.org/projects/nspr/json-tags"
+filter = '.tags[].tag | select(test("NSPR_.*_RTM")) | split("_")[1:-1] | join(".")'

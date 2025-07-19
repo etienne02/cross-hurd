@@ -5,3 +5,6 @@ manifest-*
 hd.img
 *.swp
 files/etc/ssh/ssh_host_*
+cross-tools-i686
+tools-i686
+manifest-i686.txt

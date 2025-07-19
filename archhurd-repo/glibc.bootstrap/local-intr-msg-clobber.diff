@@ -1,0 +1,23 @@
+Force putting save_data on the stack rather than in SSE register
+
+The signal management does not yet properly save SSE state, so that save_data
+would get overwritten by signal handlers, notably leading to `` shell
+replacement getting empty content because then the io_read RPC retry gets an
+MIG_BAD_ARGUMENTS error.
+
+XXX: This is only temporary to fix the common shll replacement issue, and is
+waiting for proper SSE state restoration.
+
+Index: glibc-2.38/hurd/intr-msg.c
+===================================================================
+--- glibc-2.38.orig/hurd/intr-msg.c
++++ glibc-2.38/hurd/intr-msg.c
+@@ -79,7 +79,7 @@ _hurd_intr_rpc_mach_msg (mach_msg_header
+   mach_msg_bits_t msgh_bits;
+   mach_port_t remote_port;
+   mach_msg_id_t msgid;
+-  struct clobber save_data;
++  volatile struct clobber save_data;
+ 
+   if ((option & (MACH_SEND_MSG|MACH_RCV_MSG)) != (MACH_SEND_MSG|MACH_RCV_MSG)
+       || _hurd_msgport_thread == MACH_PORT_NULL)

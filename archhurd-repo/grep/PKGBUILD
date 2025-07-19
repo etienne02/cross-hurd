@@ -1,0 +1,69 @@
+# Maintainer: Sébastien Luttringer <seblu@archlinux.org>
+# Contributor: Allan McRae <allan@archlinux.org>
+# Contributor: judd <jvinet@zeroflux.org>
+
+pkgname=grep
+pkgver=3.12
+pkgrel=2
+pkgdesc='A string search utility'
+arch=('x86_64')
+license=('GPL-3.0-or-later')
+url='https://www.gnu.org/software/grep/'
+depends=('glibc' 'pcre2' 'sh')
+makedepends=('gperf' 'git' 'python' 'texinfo' 'wget')
+checkdepends=('glibc-locales')
+validpgpkeys=('155D3FC500C834486D1EEA677FD9FCCB000BEEEE') # Jim Meyering <meyering@meta.com>
+source=("git+https://git.savannah.gnu.org/git/grep.git#tag=v${pkgver}?signed"
+        "git+https://git.savannah.gnu.org/git/gnulib.git"
+        "https://ftp.gnu.org/gnu/grep/grep-${pkgver}.tar.gz"{,.sig})
+sha256sums=('9543190d9ca2201ea46fddaeb39031a0acde1f6aa4351a72f33ef3455e6dd41e'
+            'SKIP'
+            'badda546dfc4b9d97e992e2c35f3b5c7f20522ffcbe2f01ba1e9cdcbe7644cdc'
+            'SKIP')
+
+prepare() {
+  cd "${pkgname}"
+
+  git submodule init
+  git config submodule.gnulib.url "${srcdir}/gnulib"
+  git -c protocol.file.allow=always submodule update
+
+  git cherry-pick -n \
+    '2e19d07ef1c08c3ce4771bb1bfee1ae6541f1c0d'
+
+  ./bootstrap \
+    --skip-po
+}
+
+build() {
+  cd "${pkgname}"
+
+  ./configure \
+    --prefix=/usr \
+    --disable-gcc-warnings
+  make
+
+  # Generate grep mo files from dist tarball
+  cd "${srcdir}/${pkgname}-${pkgver}/po"
+  for po in *.po; do
+    msgfmt "${po}" -o "${po%.po}.mo"
+  done
+}
+
+check() {
+  cd "${pkgname}"
+
+  make check
+}
+
+package() {
+  cd "${pkgname}"
+
+  make DESTDIR="$pkgdir" install
+
+  # Install grep mo files from dist tarball
+  cd "${srcdir}/${pkgname}-${pkgver}/po"
+  for mo in *.mo; do
+    install -Dm 644 "${mo}" "${pkgdir}/usr/share/locale/${mo%.mo}/LC_MESSAGES/${pkgname}.mo"
+  done
+}

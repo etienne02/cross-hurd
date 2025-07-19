@@ -1,0 +1,57 @@
+diff --git a/netbsd/lib/librumpuser/rumpuser.c b/netbsd/lib/librumpuser/rumpuser.c
+index 3c03cb90..98da14bd 100644
+--- a/netbsd/lib/librumpuser/rumpuser.c
++++ b/netbsd/lib/librumpuser/rumpuser.c
+@@ -25,6 +25,9 @@
+  * SUCH DAMAGE.
+  */
+ 
++// putchar debug hack
++void mach_print(char *c);
++
+ #include "rumpuser_port.h"
+ 
+ #if !defined(lint)
+@@ -57,19 +60,13 @@ struct rumpuser_hyperup rumpuser__hyp;
+ int
+ rumpuser_init(int version, const struct rumpuser_hyperup *hyp)
+ {
+-	int rv;
+-
+ 	if (version != RUMPUSER_VERSION) {
+-		fprintf(stderr, "rumpuser mismatch, kern: %d, hypervisor %d\n",
++		rumpuser_dprintf("rumpuser mismatch, kern: %d, hypervisor %d\n",
+ 		    version, RUMPUSER_VERSION);
+ 		abort();
+ 	}
+ 
+-	rv = rumpuser__random_init();
+-	if (rv != 0) {
+-		ET(rv);
+-	}
+-
++	rumpuser__random_init();
+ 	rumpuser__thrinit();
+ 	rumpuser__hyp = *hyp;
+ 
+@@ -223,8 +220,10 @@ rumpuser_getparam(const char *name, void *buf, size_t blen)
+ void
+ rumpuser_putchar(int c)
+ {
++  char s[2] = {0};
+ 
+-	putchar(c);
++  s[0] = (char)c;
++  mach_print(s);
+ }
+ 
+ __dead void
+@@ -254,7 +253,7 @@ rumpuser_dprintf(const char *format, ...)
+ 	va_list ap;
+ 
+ 	va_start(ap, format);
+-	vfprintf(stderr, format, ap);
++	vfprintf(stdout, format, ap);
+ 	va_end(ap);
+ }
+ 

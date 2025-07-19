@@ -1,0 +1,54 @@
+# Maintainer: Anatol Pomozov <anatol.pomozov@gmail.com>
+# Maintainer: Carl Smedstad <carsme@archlinux.org>
+# Contributor: Filip Brcic <brcha@gna.org>
+# Contributor: Mika Fischer <mika.fischer@zoopnet.de>
+# Contributor: Gergely Imreh <imrehgATgmailDOTcom>
+
+pkgname=ninja
+pkgver=1.13.2
+pkgrel=3
+pkgdesc='Small build system with a focus on speed'
+arch=(x86_64)
+url='https://ninja-build.org/'
+license=(Apache-2.0)
+depends=(
+  glibc
+  libgcc
+  libstdc++
+)
+makedepends=(
+  cmake
+  gtest
+  python
+  re2c
+)
+source=("https://github.com/ninja-build/ninja/archive/v$pkgver/$pkgname-$pkgver.tar.gz")
+b2sums=('3418c756386a277f2a280b39f378e1bb944c4f9664254c69066de0d73a274b7faa9b688c475337b28ef24e279b5533ed990479c0cc900dcf38b0562acbdaa322')
+
+build() {
+  cmake -B build -S $pkgname-$pkgver \
+    -DCMAKE_BUILD_TYPE=None \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+	-DBUILD_TESTING=OFF \
+    -Wno-dev
+  cmake --build build
+}
+
+check() {
+  ctest --test-dir build --output-on-failure
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+
+  cd $pkgname-$pkgver
+  install -vDm644 -t "$pkgdir/usr/share/doc/$pkgname" doc/manual.asciidoc
+  install -vDm644 -t "$pkgdir/usr/share/licenses/$pkgname" COPYING
+
+  install -vDm644 -t "$pkgdir/usr/share/vim/vimfiles/syntax" misc/ninja.vim
+  local site_packages=$(python -c "import site; print(site.getsitepackages()[0])")
+  install -vDm644 -t "$pkgdir/$site_packages" misc/ninja_syntax.py
+
+  install -vDm644 misc/bash-completion "$pkgdir/usr/share/bash-completion/completions/ninja"
+  install -vDm644 misc/zsh-completion "$pkgdir/usr/share/zsh/site-functions/_ninja"
+}

@@ -1,0 +1,192 @@
+--- a/pci-userspace/src-gnu/Makefile.inc
++++ b/pci-userspace/src-gnu/Makefile.inc
+@@ -3,19 +3,11 @@
+ PCIDIR:=	${.PARSEDIR}
+ .PATH:		${PCIDIR}
+ 
+-RUMPCOMP_USER_SRCS=	pci_user-gnu.c experimentalUser.c mach_debugUser.c
++RUMPCOMP_USER_SRCS=	pci_user-gnu.c mach_debugUser.c
+ RUMPCOMP_USER_CPPFLAGS+=-I${PCIDIR}
+ RUMPCOMP_CPPFLAGS+=	-I${PCIDIR}
+ CPPFLAGS+=		-I${PCIDIR}
+-LDFLAGS+= -Wl,--no-as-needed -lpciaccess -Wl,--as-needed
+-
+-experimentalUser.c:
+-	echo '#include <mach/experimental.defs>' \
+-		| ${CC} -E -x c - -o - \
+-		| mig -cc cat - /dev/null -subrprefix __ \
+-			-user experimentalUser.c \
+-			-server /dev/null \
+-			-header experimental_U.h
++LDFLAGS+= -lmachuser -Wl,--no-as-needed -lpciaccess -Wl,--as-needed
+ 
+ mach_debugUser.c:
+ 	echo '#include <mach_debug/mach_debug.defs>' \
+--- a/pci-userspace/src-gnu/pci_user-gnu.c
++++ b/pci-userspace/src-gnu/pci_user-gnu.c
+@@ -59,13 +59,13 @@
+ #include <rump/rumpuser_component.h>
+ 
+ #include <hurd.h>
+-#include <device/device.h>
+ 
+ #include <pciaccess.h>
+ 
+ #include "pci_user.h"
+-#include "experimental_U.h"
+ #include <device/notify.h>
++#include <device/device.h>
++#include <mach/gnumach.h>
+ #include "mach_debug_U.h"
+ #include <mach/vm_param.h>
+ #include <mach.h>
+@@ -89,11 +89,10 @@ static int numdevs =3D -1;
+ 
+ static mach_port_t master_host;
+ static mach_port_t master_device;
++static device_t irq_dev;
+ 
+ #define PCI_CFG1_START 0xcf8
+ #define PCI_CFG1_END   0xcff
+-#define PCI_CFG2_START 0xc000
+-#define PCI_CFG2_END   0xcfff
+
+ int
+ rumpcomp_pci_iospace_init(void)
+@@ -105,11 +104,8 @@ rumpcomp_pci_iospace_init(void)
+ 	/* 0-0xcf7 */
+ 	if (ioperm(0, PCI_CFG1_START, 1))
+ 		return rumpuser_component_errtrans(errno);
+-	/* 0xd00-0xbfff */
+-	if (ioperm(PCI_CFG1_END+1, PCI_CFG2_START - (PCI_CFG1_END+1), 1))
+-		return rumpuser_component_errtrans(errno);
+-	/* 0xd000-0xffff */
+-	if (ioperm(PCI_CFG2_END+1, 0x10000 - (PCI_CFG2_END+1), 1))
++	/* 0xd00-0xffff */
++	if (ioperm(PCI_CFG1_END+1, 0x10000 - (PCI_CFG1_END+1), 1))
+ 		return rumpuser_component_errtrans(errno);
+
+ 	return 0;
+@@ -131,6 +132,9 @@
+ 	if (get_privileged_ports (&master_host, &master_device))
+ 		err(1, "get_privileged_ports");
+ 
++	if (device_open (master_device, D_READ, "irq", &irq_dev))
++		err(2, "device_open irq");
++
+ 	pci_system_init ();
+ 	struct pci_device_iterator *dev_iter;
+ 	struct pci_device *pci_dev;
+@@ -255,6 +259,7 @@
+ 	int (*handler)(void *);
+ 	void *data;
+ 	int intrline;
++	mach_port_t irqport;
+ 	sem_t sema;
+ 
+ 	LIST_ENTRY(irq) entries;
+@@ -280,6 +285,9 @@
+ 		MACH_PRINT("mach_port_allocate\n");
+ 		return 0;
+ 	}
++
++	irq->irqport = delivery_port;
++
+ 	ret = thread_get_assignment (mach_thread_self (), &pset);
+ 	if (ret) {
+ 		MACH_PRINT("thread_get_assignment\n");
+@@ -296,11 +304,12 @@
+ 		MACH_PRINT("thread_priority\n");
+ 		return 0;
+ 	}
+-	ret = device_intr_register(master_device, irq->intrline,
+-					0, 0x04000000, delivery_port,
+-					MACH_MSG_TYPE_MAKE_SEND);
++
++	ret = device_intr_register(irq_dev, irq->intrline,
++				   0, irq->irqport,
++				   MACH_MSG_TYPE_MAKE_SEND);
+ 	if (ret) {
+-		MACH_PRINT("device_intr_register");
++		MACH_PRINT("device_intr_register\n");
+ 		return 0;
+ 	}
+ 
+@@ -316,12 +325,13 @@
+ 		}
+ 
+ 		/* It's an interrupt not for us. It shouldn't happen. */
+-		if (n->line != irq->intrline) {
++		/* FIXME: id <-> line now has an indirection, assuming 1:1 */
++		if (n->id != irq->intrline) {
+ 			MACH_PRINT("interrupt not for us\n");
+ 			return 0;
+ 		}
+ 
+-		sprintf(interrupt, "%d\n", n->line);
++		sprintf(interrupt, "%d\n", n->id);
+ 		MACH_PRINT("irq fired: ");
+ 		MACH_PRINT(interrupt);
+ 
+@@ -338,13 +348,11 @@
+ 		rumpuser_component_unschedule();
+ 		MACH_PRINT("k_done\n");
+ 
+-		device_intr_enable (master_device, irq->intrline, TRUE);
++		device_intr_ack (irq_dev, irq->irqport, MACH_MSG_TYPE_MAKE_SEND);
+ 
+ 		return 1;
+         }
+ 
+-	device_intr_enable (master_device, irq->intrline, TRUE);
+-
+ 	sem_post(&irq->sema);
+ 	MACH_PRINT("done init\n");
+ 
+@@ -426,20 +434,20 @@
+ rumpcomp_pci_dmalloc(size_t size, size_t align,
+ 	unsigned long *pap, unsigned long *vap)
+ {
+-	const size_t pagesize = getpagesize();
+-
+-	if (align > pagesize) {
+-		warnx("requested alignment (%x) is larger than page size (%x)", align, pagesize);
+-		return 1;
+-	}
++	vm_address_t vma = 0;
++	rpc_phys_addr_t phys = 0;
+ 
+ 	pci_userspace_init();
+ 
+-	if (vm_allocate_contiguous (master_host, mach_task_self(), vap, pap, size)) {
+-		warn("vm_allocate_contiguous");
++	if (vm_allocate_contiguous (master_host, mach_task_self(), &vma, &phys,
++				    size, 0, 0x100000000, align)) {
++		MACH_PRINT("vm_allocate_contiguous\n");
+ 		return 1;
+ 	}
+ 
++	*vap = (unsigned long)(vma);
++	*pap = (unsigned long)(phys);
++
+ 	assert(*pap);
+ 
+ 	return 0;
+@@ -463,7 +471,7 @@
+ 	size_t totlen, void **vap)
+ {
+ 	if (nseg > 1) {
+-		printf("dmamem_map for >1 seg currently not supported");
++		MACH_PRINT("dmamem_map for >1 seg currently not supported\n");
+ 		return ENOTSUP;
+ 	}
+ 
+@@ -514,7 +522,7 @@
+ 		err(ret, "vm_deallocate");
+ 
+ 	if (paddr == 0){
+-		warn("rumpcomp_pci_virt_to_mach");
++		MACH_PRINT("rumpcomp_pci_virt_to_mach\n");
+ 		printf("Cannot find a physical address for vaddr %p, returning 0\n", virt);
+ 	}
+ 

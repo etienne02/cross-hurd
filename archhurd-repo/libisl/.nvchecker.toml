@@ -1,0 +1,4 @@
+[libisl]
+source = 'git'
+git = 'https://repo.or.cz/isl.git'
+prefix = 'isl-'

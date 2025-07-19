@@ -1,0 +1,31 @@
+version = 1
+
+[[annotations]]
+path = [
+    "PKGBUILD",
+    "README.md",
+    "keys/**",
+    ".SRCINFO",
+    ".nvchecker.toml",
+    "*.install",
+    "*.sysusers",
+    "*.tmpfiles",
+    "*.logrotate",
+    "*.pam",
+    "*.service",
+    "*.socket",
+    "*.timer",
+    "*.desktop",
+    "*.hook",
+]
+SPDX-FileCopyrightText = "Arch Linux contributors"
+SPDX-License-Identifier = "0BSD"
+
+[[annotations]]
+path = [
+    "0000-dummy.keep",
+    "0001-Revert-PR-679-matches-too-many-unix-stanza-files-lik.patch",
+    "0002-PR-725-inliniac-Revert-previous-and-always-set-offse.patch",
+]
+SPDX-FileCopyrightText = "file contributors"
+SPDX-License-Identifier = "LicenseRef-file"

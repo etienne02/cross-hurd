@@ -1,0 +1,19 @@
+pkgbase = xz
+	pkgdesc = Library and command line tools for XZ and LZMA compressed files
+	pkgver = 5.8.3
+	pkgrel = 1
+	url = https://tukaani.org/xz/
+	arch = x86_64
+	license = GPL-2.0-or-later AND 0BSD AND LicenseRef-Public-Domain AND LGPL-2.1-or-later
+	makedepends = git
+	makedepends = po4a
+	makedepends = doxygen
+	depends = glibc
+	depends = sh
+	provides = liblzma.so
+	source = git+https://github.com/tukaani-project/xz#tag=v5.8.3?signed
+	validpgpkeys = 3690C240CE51B4670D30AD1C38EE757D69184620
+	sha256sums = ac5336c53dfc666810582c21b22f89bab021d3afbe6cb365c80fbfcbe73a6c24
+	sha512sums = 47f7d0cdd200c0db0bee0cf5d1419993d02219ee7c52dc3ea017a9b6af5c2dc5c0d80eab485715f2eb7016829ad14963e836bf07b32b11b9743fd933df2476d0
+
+pkgname = xz

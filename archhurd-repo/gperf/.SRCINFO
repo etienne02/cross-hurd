@@ -1,0 +1,19 @@
+pkgbase = gperf
+	pkgdesc = Perfect hash function generator
+	pkgver = 3.3
+	pkgrel = 2
+	url = https://www.gnu.org/software/gperf/
+	arch = x86_64
+	license = GPL-3.0-or-later
+	depends = glibc
+	depends = libgcc
+	depends = libstdc++
+	options = !makeflags
+	source = https://ftp.gnu.org/pub/gnu/gperf/gperf-3.3.tar.gz
+	source = https://ftp.gnu.org/pub/gnu/gperf/gperf-3.3.tar.gz.sig
+	validpgpkeys = EDEB87A500CC0A211677FBFD93C08C88471097CD
+	validpgpkeys = E0FFBD975397F77A32AB76ECB6301D9E1BBEAC08
+	b2sums = 76fd532c4443d27031c8b2dbceaa985d0d3eed8d66f2ba2d128d027ecec0175717ab1468236b0b0405445e7457076a802458e326d5023ce28869e478ca622fa9
+	b2sums = SKIP
+
+pkgname = gperf

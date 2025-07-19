@@ -1,0 +1,16 @@
+diff --git a/netbsd/sys/rump/dev/Makefile.rumpdevcomp b/netbsd/sys/rump/dev/Makefile.rumpdevcomp
+index 68c0833e6..13c1ac209 100644
+--- a/netbsd/sys/rump/dev/Makefile.rumpdevcomp
++++ b/netbsd/sys/rump/dev/Makefile.rumpdevcomp
+@@ -11,8 +11,9 @@ RUMPPCIDEVS=	pci pci_if_iwn pci_if_pcn pci_if_wm
+ RUMPPCIDEVS+=	pci_ahcisata
+ RUMPPCIDEVS+=	pci_piixide
+ RUMPPCIDEVS+=	pci_usbhc
+-RUMPPCIDEVS+=	pci_virtio virtio_if_vioif virtio_ld virtio_viornd
+-RUMPPCIDEVS+=	virtio_vioscsi
++#Fix virtio later
++#RUMPPCIDEVS+=	pci_virtio virtio_if_vioif virtio_ld virtio_viornd
++#RUMPPCIDEVS+=	virtio_vioscsi
+ RUMPPCIDEVS+=	audio_ac97 pci_auich pci_eap pci_hdaudio hdaudio_hdafg
+ # Not really a PCI device, but ....
+ RUMPPCIDEVS+=	miiphy

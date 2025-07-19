@@ -1,0 +1,259 @@
+---
+ src/sys/rump/dev/lib/libpci/pci_user.h        |    6 
+ src/sys/rump/dev/lib/libpci/rumpdev_bus_dma.c |   14 +-
+ src/sys/rump/include/sys/bus.h                |    2 
+ pci-userspace/src-gnu/pci_user-gnu.c                       |   82 +++++++++----
+ pci-userspace/src-linux-uio/pci_user-uio_linux.c           |    6 
+ 5 files changed, 71 insertions(+), 39 deletions(-)
+
+Index: rumpkernel/pci-userspace/src-gnu/pci_user-gnu.c
+===================================================================
+--- rumpkernel.orig/pci-userspace/src-gnu/pci_user-gnu.c
++++ rumpkernel/pci-userspace/src-gnu/pci_user-gnu.c
+@@ -446,7 +446,7 @@ rumpcomp_pci_irq_establish(unsigned cook
+  */
+ int
+ rumpcomp_pci_dmalloc(size_t size, size_t align,
+-	unsigned long *pap, unsigned long *vap)
++	unsigned long long *pap, unsigned long *vap)
+ {
+ 	vm_address_t vma = 0;
+ 	rpc_phys_addr_t phys = 0;
+@@ -460,7 +460,7 @@ rumpcomp_pci_dmalloc(size_t size, size_t
+ 	}
+ 
+ 	*vap = (unsigned long)(vma);
+-	*pap = (unsigned long)(phys);
++	*pap = (unsigned long long)(phys);
+ 
+ 	assert(*pap);
+ 
+@@ -496,14 +496,15 @@ rumpcomp_pci_dmamem_map(struct rumpcomp_
+ /*
+  * Finds the physical address for the given virtual address.
+  */
+-unsigned long
++unsigned long long
+ rumpcomp_pci_virt_to_mach(void *virt)
+ {
+-	unsigned long paddr=0;
++	unsigned long long paddr=0;
+ 	kern_return_t ret;
+ 	vm_address_t vaddr = (vm_address_t)virt;
+ 	vm_region_info_t region;
+ 	mach_port_t tp, object;
++	vm_page_phys_info_array_t pages_phys;
+ 	vm_page_info_array_t pages;
+ 	mach_msg_type_number_t pagesCnt=0;
+ 
+@@ -512,30 +513,61 @@ rumpcomp_pci_virt_to_mach(void *virt)
+ 	if (KERN_SUCCESS != ret)
+ 		err(ret, "mach_vm_region_info");
+ 
+-	ret = mach_vm_object_pages(object, &pages, &pagesCnt);
+-	if (KERN_SUCCESS != ret)
+-		err(ret, "mach_vm_object_pages");
+-
+-	mach_port_deallocate(mach_task_self(), object);
+-
+-	for (size_t i=0; (i<pagesCnt); i++){
+-		vm_page_info_t *vpi;
+-		vm_address_t vaddr_obj;
+-
+-		vpi = &pages[i];
+-		vaddr_obj = (vaddr - region.vri_start) + region.vri_offset;
+-		if ((vpi->vpi_phys_addr != 0) &&
+-		    (vpi->vpi_offset <= vaddr_obj) &&
+-		    (vaddr_obj < (vpi->vpi_offset + PAGE_SIZE))){
+-			paddr = vpi->vpi_phys_addr + (vaddr_obj - vpi->vpi_offset);
++	ret = mach_vm_object_pages_phys(object, &pages_phys, &pagesCnt);
++	if (ret == KERN_SUCCESS)
++	{
++		mach_port_deallocate(mach_task_self(), object);
++
++		for (size_t i=0; (i<pagesCnt); i++){
++			vm_page_phys_info_t *vpi;
++			vm_address_t vaddr_obj;
++
++			vpi = &pages_phys[i];
++			vaddr_obj = (vaddr - region.vri_start) + region.vri_offset;
++			if ((vpi->vpi_phys_addr != 0) &&
++			    (vpi->vpi_offset <= vaddr_obj) &&
++			    (vaddr_obj < (vpi->vpi_offset + PAGE_SIZE))){
++				paddr = vpi->vpi_phys_addr + (vaddr_obj - vpi->vpi_offset);
++
++				/* Found a match, don't scan remaining pages */
++				break;
++			}
++		}
+ 
+-			/* Found a match, don't scan remaining pages */
+-			break;
++		ret = vm_deallocate(tp, (vm_address_t)pages_phys, pagesCnt*sizeof(*pages_phys));
++		if (KERN_SUCCESS != ret)
++			err(ret, "vm_deallocate");
++	}
++	else
++	{
++		/* Fallback to non-PAE RPC, hoping for the best  */
++
++		ret = mach_vm_object_pages(object, &pages, &pagesCnt);
++		if (KERN_SUCCESS != ret)
++			err(ret, "mach_vm_object_pages");
++
++		mach_port_deallocate(mach_task_self(), object);
++
++		for (size_t i=0; (i<pagesCnt); i++){
++			vm_page_info_t *vpi;
++			vm_address_t vaddr_obj;
++
++			vpi = &pages[i];
++			vaddr_obj = (vaddr - region.vri_start) + region.vri_offset;
++			if ((vpi->vpi_phys_addr != 0) &&
++			    (vpi->vpi_offset <= vaddr_obj) &&
++			    (vaddr_obj < (vpi->vpi_offset + PAGE_SIZE))){
++				paddr = vpi->vpi_phys_addr + (vaddr_obj - vpi->vpi_offset);
++
++				/* Found a match, don't scan remaining pages */
++				break;
++			}
+ 		}
++
++		ret = vm_deallocate(tp, (vm_address_t)pages, pagesCnt*sizeof(*pages));
++		if (KERN_SUCCESS != ret)
++			err(ret, "vm_deallocate");
+ 	}
+-	ret = vm_deallocate(tp, (vm_address_t)pages, pagesCnt*sizeof(*pages));
+-	if (KERN_SUCCESS != ret)
+-		err(ret, "vm_deallocate");
+ 
+ 	if (paddr == 0){
+ 		MACH_PRINT("rumpcomp_pci_virt_to_mach\n");
+Index: rumpkernel/netbsd/sys/rump/dev/lib/libpci/pci_user.h
+===================================================================
+--- rumpkernel.orig/netbsd/sys/rump/dev/lib/libpci/pci_user.h
++++ rumpkernel/netbsd/sys/rump/dev/lib/libpci/pci_user.h
+@@ -20,20 +20,20 @@ int rumpcomp_pci_irq_map(unsigned, unsig
+ void *rumpcomp_pci_irq_establish(unsigned, int (*)(void *), void *);
+ 
+ /* XXX: needs work: support boundary-restricted allocations */
+-int rumpcomp_pci_dmalloc(size_t, size_t, unsigned long *, unsigned long *);
++int rumpcomp_pci_dmalloc(size_t, size_t, unsigned long long *, unsigned long *);
+ #ifdef RUMPCOMP_USERFEATURE_PCI_DMAFREE
+ void rumpcomp_pci_dmafree(unsigned long, size_t);
+ #endif
+ 
+ struct rumpcomp_pci_dmaseg {
+-	unsigned long ds_pa;
++	unsigned long long ds_pa;
+ 	unsigned long ds_len;
+ 	unsigned long ds_vacookie;
+ };
+ int rumpcomp_pci_dmamem_map(struct rumpcomp_pci_dmaseg *, size_t, size_t,
+ 			    void **);
+ 
+-unsigned long rumpcomp_pci_virt_to_mach(void *);
++unsigned long long rumpcomp_pci_virt_to_mach(void *);
+ 
+ #ifdef RUMPCOMP_USERFEATURE_PCI_IOSPACE
+ int rumpcomp_pci_iospace_init(void);
+Index: rumpkernel/netbsd/sys/rump/include/sys/bus.h
+===================================================================
+--- rumpkernel.orig/netbsd/sys/rump/include/sys/bus.h
++++ rumpkernel/netbsd/sys/rump/include/sys/bus.h
+@@ -45,7 +45,7 @@ typedef void *bus_dma_tag_t;
+ #define BUS_DMA_TAG_VALID(_tag_) ((_tag_) != NULL)
+ 
+ typedef struct {
+-	bus_addr_t	ds_addr;
++	unsigned long long	ds_addr;
+ 	bus_size_t	ds_len;
+ 	vaddr_t		_ds_vacookie;
+ 	bus_size_t	_ds_sizecookie;
+Index: rumpkernel/pci-userspace/src-linux-uio/pci_user-uio_linux.c
+===================================================================
+--- rumpkernel.orig/pci-userspace/src-linux-uio/pci_user-uio_linux.c
++++ rumpkernel/pci-userspace/src-linux-uio/pci_user-uio_linux.c
+@@ -293,7 +293,7 @@ rumpcomp_pci_irq_establish(unsigned cook
+  */
+ int
+ rumpcomp_pci_dmalloc(size_t size, size_t align,
+-	unsigned long *pap, unsigned long *vap)
++	unsigned long long *pap, unsigned long *vap)
+ {
+ 	const size_t pagesize = getpagesize();
+ 	void *v;
+@@ -350,11 +350,11 @@ rumpcomp_pci_dmamem_map(struct rumpcomp_
+  * Finds the physical address for the given virtual address from
+  * /proc/self/pagemap.
+  */
+-unsigned long
++unsigned long long
+ rumpcomp_pci_virt_to_mach(void *virt)
+ {
+ 	uint64_t voff, pte;
+-	unsigned long paddr = 0;
++	unsigned long long paddr = 0;
+ 	int pagesize, offset;
+ 
+ 	(void)*(volatile int *)virt;
+Index: rumpkernel/netbsd/sys/rump/dev/lib/libpci/rumpdev_bus_dma.c
+===================================================================
+--- rumpkernel.orig/netbsd/sys/rump/dev/lib/libpci/rumpdev_bus_dma.c
++++ rumpkernel/netbsd/sys/rump/dev/lib/libpci/rumpdev_bus_dma.c
+@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_
+ 
+ #include "pci_user.h"
+ 
+-int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
+-	    bus_size_t, struct vmspace *, int, paddr_t *, int *, int);
++static int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
++	    bus_size_t, struct vmspace *, int, bus_addr_t *, int *, int);
+ 
+ /*
+  * Common function for DMA map creation.  May be called by bus-specific
+@@ -153,7 +153,7 @@ bus_dmamap_destroy(bus_dma_tag_t t, bus_
+ int
+ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
+ 	void *buf, bus_size_t buflen, struct vmspace *vm, int flags,
+-	paddr_t *lastaddrp, int *segp, int first)
++	bus_addr_t *lastaddrp, int *segp, int first)
+ {
+ 	bus_size_t sgsize;
+ 	bus_addr_t curaddr, lastaddr, baddr, bmask;
+@@ -252,7 +252,7 @@ int
+ bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
+ 	void *buf, bus_size_t buflen, struct proc *p, int flags)
+ {
+-	paddr_t lastaddr = 0;
++	bus_addr_t lastaddr = 0;
+ 	int seg, error;
+ 	struct vmspace *vm;
+ 
+@@ -289,7 +289,7 @@ int
+ bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
+ 	struct mbuf *m0, int flags)
+ {
+-	paddr_t lastaddr = 0;
++	bus_addr_t lastaddr = 0;
+ 	int seg, error, first;
+ 	struct mbuf *m;
+ 
+@@ -360,7 +360,7 @@ int
+ bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
+ 	struct uio *uio, int flags)
+ {
+-	paddr_t lastaddr = 0;
++	bus_addr_t lastaddr = 0;
+ 	int seg, i, error, first;
+ 	bus_size_t minlen, resid;
+ 	struct iovec *iov;
+@@ -512,7 +512,7 @@ bus_dmamem_alloc(bus_dma_tag_t t, bus_si
+ 	bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+ 	int flags)
+ {
+-	paddr_t curaddr, lastaddr, pa;
++	unsigned long long curaddr, lastaddr, pa;
+ 	vaddr_t vacookie;
+ 	size_t sizecookie;
+ 	int curseg, error;

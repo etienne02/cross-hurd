@@ -1,0 +1,27 @@
+From 5e199032cdba84909bde157af5b770c0edcf3661 Mon Sep 17 00:00:00 2001
+From: Etienne Brateau <etienne.brateau@gmail.com>
+Date: Thu, 3 Apr 2025 10:58:33 +0200
+Subject: [PATCH] hurd: define HOST_NAME_MAX to allow building
+
+---
+ modules/pam_xauth/pam_xauth.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/modules/pam_xauth/pam_xauth.c b/modules/pam_xauth/pam_xauth.c
+index f6419ced..0c214f56 100644
+--- a/modules/pam_xauth/pam_xauth.c
++++ b/modules/pam_xauth/pam_xauth.c
+@@ -83,6 +83,10 @@ static const char * const xauthpaths[] = {
+ 	"/usr/bin/X11/xauth"
+ };
+ 
++#ifndef HOST_NAME_MAX
++#define HOST_NAME_MAX 255
++#endif
++
+ /* Run a given command (with a NULL-terminated argument list), feeding it the
+  * given input on stdin, and storing any output it generates. */
+ static int
+-- 
+2.49.0
+

@@ -1,0 +1,57 @@
+# Maintainer: Pierre Schmitz <pierre@archlinux.de>
+# Contributor: François Charette <firmicus@gmx.net>
+
+pkgname=xz
+pkgver=5.8.3
+pkgrel=1
+pkgdesc='Library and command line tools for XZ and LZMA compressed files'
+arch=('x86_64')
+url='https://tukaani.org/xz/'
+license=("GPL-2.0-or-later AND 0BSD AND LicenseRef-Public-Domain AND LGPL-2.1-or-later")
+depends=(
+  glibc
+  sh
+)
+makedepends=('git' 'po4a' 'doxygen')
+provides=('liblzma.so')
+validpgpkeys=('3690C240CE51B4670D30AD1C38EE757D69184620') # Lasse Collin <lasse.collin@tukaani.org>
+source=("git+https://github.com/tukaani-project/xz#tag=v${pkgver}?signed")
+sha256sums=('ac5336c53dfc666810582c21b22f89bab021d3afbe6cb365c80fbfcbe73a6c24')
+sha512sums=('47f7d0cdd200c0db0bee0cf5d1419993d02219ee7c52dc3ea017a9b6af5c2dc5c0d80eab485715f2eb7016829ad14963e836bf07b32b11b9743fd933df2476d0')
+
+prepare() {
+  cd ${pkgname}
+
+  ./autogen.sh \
+	--no-po4a
+}
+
+build() {
+  cd ${pkgname}
+
+  ./configure \
+    --prefix=/usr \
+    --disable-rpath \
+	--disable-doc \
+	--disable-doxygen \
+    --enable-werror
+  make
+}
+
+check() {
+  cd ${pkgname}
+
+  make check
+}
+
+package() {
+  cd ${pkgname}
+
+  make DESTDIR="${pkgdir}" install
+
+  install -d -m0755 "${pkgdir}/usr/share/licenses/xz/"
+  local file
+  for file in "${pkgdir}"/usr/share/doc/xz/COPYING*; do
+    ln -sf "/usr/share/doc/xz/$(basename "${file}")" "${pkgdir}/usr/share/licenses/xz/"
+  done
+}

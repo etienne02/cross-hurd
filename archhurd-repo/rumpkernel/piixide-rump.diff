@@ -1,0 +1,51 @@
+Index: rumpkernel/netbsd/sys/rump/dev/Makefile.rumpdevcomp
+===================================================================
+--- rumpkernel.orig/netbsd/sys/rump/dev/Makefile.rumpdevcomp
++++ rumpkernel/netbsd/sys/rump/dev/Makefile.rumpdevcomp
+@@ -8,6 +8,7 @@ RUMPDEVCOMP=	audio bpf cgd disk dm drvct
+ RUMPUSBDEVS=	ualea ubt ucom ugenhc ulpt umass usb
+ 
+ RUMPPCIDEVS=	pci pci_if_iwn pci_if_pcn pci_if_wm
++RUMPPCIDEVS+=	pci_piixide
+ RUMPPCIDEVS+=	pci_usbhc
+ RUMPPCIDEVS+=	pci_virtio virtio_if_vioif virtio_ld virtio_viornd
+ RUMPPCIDEVS+=	virtio_vioscsi
+Index: rumpkernel/netbsd/sys/rump/dev/lib/libpci_piixide/Makefile
+===================================================================
+--- /dev/null
++++ rumpkernel/netbsd/sys/rump/dev/lib/libpci_piixide/Makefile
+@@ -0,0 +1,18 @@
++RUMPTOP=${TOPRUMP}
++
++.PATH:	${.CURDIR}/../../../../dev/pci \
++	${.CURDIR}/../../../../dev/ata \
++	${.CURDIR}/../../../../dev/scsipi \
++	${.CURDIR}/../../../../dev/ic
++
++LIB=	rumpdev_piixide
++COMMENT=PIIX IDE & ATAPI support
++
++IOCONF=	PIIXIDE.ioconf
++RUMP_COMPONENT=ioconf
++
++SRCS+=	pciide_common.c piixide.c
++
++.include "${RUMPTOP}/Makefile.rump"
++.include <bsd.lib.mk>
++.include <bsd.klinks.mk>
+Index: rumpkernel/netbsd/sys/rump/dev/lib/libpci_piixide/PIIXIDE.ioconf
+===================================================================
+--- /dev/null
++++ rumpkernel/netbsd/sys/rump/dev/lib/libpci_piixide/PIIXIDE.ioconf
+@@ -0,0 +1,11 @@
++ioconf piixide
++
++include "conf/files"
++include "dev/ata/files.ata"
++include "dev/pci/files.pci"
++include "rump/dev/files.rump"
++
++pseudo-root pci*
++
++# PIIX support
++piixide* at pci? dev ? function ? flags 0x0000

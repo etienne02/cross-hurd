@@ -1,0 +1,84 @@
+TODO: "TARGET" is a terrible name since that's confusing compared to the
+build/host/target convention of the GNU toolchain.
+
+---
+ src/build.sh            | 18 +++++++++++++-----
+ src/share/mk/bsd.lib.mk |  2 +-
+ pci-userspace/src-gnu/Makefile.inc   |  3 ++-
+ 3 files changed, 16 insertions(+), 7 deletions(-)
+
+Index: rumpkernel/netbsd/build.sh
+===================================================================
+--- rumpkernel.orig/netbsd/build.sh
++++ rumpkernel/netbsd/build.sh
+@@ -1784,7 +1784,7 @@ rebuildmake()
+ 
+ 	statusmsg "Bootstrapping ${toolprefix}make"
+ 	${runcmd} cd "${tmpdir}"
+-	${runcmd} env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" \
++	${runcmd} env CC="${BUILD_CC-${HOST_CC-cc}}" CPPFLAGS="${HOST_CPPFLAGS}" \
+ 		CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
+ 	    ${HOST_SH} "${TOP}/tools/make/configure" ${configure_args} ||
+ 	( cp ${tmpdir}/config.log ${tmpdir}-config.log
+@@ -2432,10 +2432,18 @@ maketoolwrapper ()
+ 	musthave=$1
+ 	tool=$2
+ 
+-	if [ "${tool}" = "CC" ]; then
+-		lctool=gcc
++	if [ "${tool}" = "AR" ]; then
++		lctool=${TARGET_AR-ar}
++	elif [ "${tool}" = "CC" ]; then
++		lctool=${TARGET_CC-gcc}
+ 	elif [ "${tool}" = "CXX" ]; then
+-		lctool=g++
++		lctool=${TARGET_CXX-g++}
++	elif [ "${tool}" = "LD" ]; then
++		lctool=${TARGET_LD-ld}
++	elif [ "${tool}" = "MIG" ]; then
++		lctool=${TARGET_MIG-mig}
++	elif [ "${tool}" = "NM" ]; then
++		lctool=${TARGET_NM-nm}
+ 	else
+ 		lctool=$(echo ${tool} | tr '[A-Z]' '[a-z]')
+ 	fi
+@@ -2502,7 +2510,7 @@ makerumptools ()
+ 	for x in CC AR NM OBJCOPY; do
+ 		maketoolwrapper true $x
+ 	done
+-	for x in AS LD OBJDUMP RANLIB READELF SIZE STRINGS STRIP CXX; do
++	for x in AS LD OBJDUMP RANLIB READELF SIZE STRINGS STRIP CXX MIG; do
+ 		maketoolwrapper false $x
+ 	done
+ 
+Index: rumpkernel/netbsd/share/mk/bsd.lib.mk
+===================================================================
+--- rumpkernel.orig/netbsd/share/mk/bsd.lib.mk
++++ rumpkernel/netbsd/share/mk/bsd.lib.mk
+@@ -632,7 +632,7 @@ DPADD+=			${VERSION_MAP}
+ LDFLAGS+=		-Wl,--version-script=${${VERSION_MAP}:P}
+ .endif
+ 
+-_LDADD.${_LIB}=	${LDADD} ${LDADD.${_LIB}}
++_LDADD.${_LIB}=	${LDADD} ${TARGET_LDADD} ${LDADD.${_LIB}}
+ _LDFLAGS.${_LIB}=	${LDFLAGS} ${LDFLAGS.${_LIB}}
+ 
+ _MAINLIBDEPS=	${SOLIB} ${DPADD} ${DPLIBC} \
+Index: rumpkernel/pci-userspace/src-gnu/Makefile.inc
+===================================================================
+--- rumpkernel.orig/pci-userspace/src-gnu/Makefile.inc
++++ rumpkernel/pci-userspace/src-gnu/Makefile.inc
+@@ -8,11 +8,12 @@ RUMPCOMP_USER_CPPFLAGS+=-I${PCIDIR} -I${
+ RUMPCOMP_CPPFLAGS+=	-I${PCIDIR} -I${DESTDIR}/usr/include
+ CPPFLAGS+=		-I${PCIDIR}
+ LDFLAGS+= -lmachuser -Wl,--no-as-needed -lpciaccess -Wl,--as-needed
++MIG=mig
+ 
+ mach_debugUser.c:
+ 	echo '#include <mach_debug/mach_debug.defs>' \
+ 		| ${CC} -E -x c - -o - \
+-		| mig -cc cat - /dev/null -subrprefix __ \
++		| $(MIG) -cc cat - /dev/null -subrprefix __ \
+ 			-user mach_debugUser.c \
+ 			-server /dev/null \
+ 			-header mach_debug_U.h
