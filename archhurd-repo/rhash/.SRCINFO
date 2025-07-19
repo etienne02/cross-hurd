@@ -1,0 +1,17 @@
+pkgbase = rhash
+	pkgdesc = Utility for verifying hash sums of files
+	pkgver = 1.4.6
+	pkgrel = 1
+	url = https://github.com/rhash/RHash
+	arch = x86_64
+	license = 0BSD
+	depends = glibc
+	provides = librhash.so
+	backup = etc/rhashrc
+	source = https://github.com/rhash/RHash/archive/v1.4.6/rhash-1.4.6.tar.gz
+	source = rhash-1.4.6.tar.gz.asc::https://github.com/rhash/RHash/releases/download/v1.4.6/v1.4.6.tar.gz.asc
+	validpgpkeys = 2875F6B1C2D27A4F0C8AF60B2A714497E37363AE
+	sha512sums = c125b71ec36cce2ec31057239cac8b987555f5e3b152dacb6386b905f8cc4d449c1de5b53e5a5206a2d87975681225c9b54e5826c10ffd91b3440f8595d22b15
+	sha512sums = SKIP
+
+pkgname = rhash

@@ -1,0 +1,27 @@
+pkgbase = hurd
+	pkgdesc = The GNU Hurd
+	pkgver = 0.9
+	pkgrel = 1
+	url = http://www.gnu.org/software/hurd/hurd.html
+	arch = x86_64
+	license = GPL-2.0-or-later
+	makedepends = mig
+	makedepends = rumpkernel
+	makedepends = parted
+	depends = gnumach
+	depends = glibc
+	depends = parted
+	optdepends = libxkbcommon
+	optdepends = xkeyboard-config
+	provides = fakeroot
+	options = !strip
+	source = git+https://git.savannah.gnu.org/git/hurd/hurd.git#commit=2e48029bc1b01f45233dd7a1297f95e43782a103
+	source = ttys
+	source = hurd-refcounts-assert.patch
+	source = link-rump.patch
+	sha256sums = e95ca825645a19cb09d9e290fcad8e223efdfb1b4e62ae542ef6a33678233a96
+	sha256sums = de2642b8216c341de09b122150a059993d01419df038201e189badea4d8fbd34
+	sha256sums = 97b73064b8c523d9e41ccf1c3f918888c98315a38ed42b85adabf2091302b16f
+	sha256sums = cac6d54769cc2b5298e9f6d2517d964ce63e368a9668b0f7bad8fbd4aa4d59ec
+
+pkgname = hurd

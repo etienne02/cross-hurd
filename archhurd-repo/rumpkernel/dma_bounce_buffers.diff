@@ -1,0 +1,621 @@
+Index: rumpkernel/buildrump.sh/src/sys/rump/dev/lib/libpci/pci_at_mainbus.c
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/rump/dev/lib/libpci/pci_at_mainbus.c
++++ rumpkernel/buildrump.sh/src/sys/rump/dev/lib/libpci/pci_at_mainbus.c
+@@ -45,6 +45,20 @@ __KERNEL_RCSID(0, "$NetBSD: pci_at_mainb
+ 
+ #include "pci_user.h"
+ 
++struct bus_dma_tag rump_bus_dma_tag = {
++#if defined(_LP64) || defined(PAE)
++	._bounce_thresh		= PCI32_DMA_BOUNCE_THRESHOLD,
++#else
++	._bounce_thresh		= 0,
++#endif
++};
++
++#ifdef _LP64
++struct bus_dma_tag rump_bus_dma64_tag = {
++	._bounce_thresh		= 0,
++};
++#endif
++
+ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
+ {
+ 	extern const struct cdevsw pci_cdevsw;
+@@ -76,9 +90,9 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV_AFTERM
+ 	pba.pba_bus = 0;
+ 	pba.pba_iot = (bus_space_tag_t)0;
+ 	pba.pba_memt = (bus_space_tag_t)1;
+-	pba.pba_dmat = (void *)0x20;
++	pba.pba_dmat = &rump_bus_dma_tag;
+ #ifdef _LP64
+-	pba.pba_dmat64 = (void *)0x40;
++	pba.pba_dmat64 = &rump_bus_dma64_tag;
+ #endif
+ 	pba.pba_flags = PCI_FLAGS_MEM_OKAY |
+ 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
+Index: rumpkernel/buildrump.sh/src/sys/rump/dev/lib/libpci/rumpdev_bus_dma.c
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/rump/dev/lib/libpci/rumpdev_bus_dma.c
++++ rumpkernel/buildrump.sh/src/sys/rump/dev/lib/libpci/rumpdev_bus_dma.c
+@@ -82,11 +82,74 @@ __KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_
+ 
+ #include "pci_user.h"
+ 
++#define	RUMP_DMA_MIGHT_NEED_BOUNCE	0x01	/* may need bounce buffers */
++#define	RUMP_DMA_HAS_BOUNCE		0x02	/* has bounce buffers */
++#define	RUMP_DMA_IS_BOUNCING		0x04	/* is bouncing current xfer */
++#define	RUMP_DMA_BUFTYPE_INVALID	0
++#define	RUMP_DMA_BUFTYPE_LINEAR		1
++
++struct rump_bus_dma_cookie {
++
++	int	id_flags;		/* flags; see below */
++
++	/*
++	 * Information about the original buffer used during
++	 * DMA map syncs.  Note that origibuflen is only used
++	 * for RUMP_DMA_BUFTYPE_LINEAR.
++	 */
++	void	*id_origbuf;		/* pointer to orig buffer if
++					   bouncing */
++	bus_size_t id_origbuflen;	/* ...and size */
++	int	id_buftype;		/* type of buffer */
++
++	void	*id_bouncebuf;		/* pointer to the bounce buffer */
++	bus_size_t id_bouncebuflen;	/* ...and size */
++	int	id_nbouncesegs;		/* number of valid bounce segs */
++	bus_dma_segment_t id_bouncesegs[0]; /* array of bounce buffer
++					       physical memory segments */
++};
++
+ static int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
+ 	    bus_size_t, struct vmspace *, int, bus_addr_t *, int *, int);
+ 
+ int bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
+ 			 bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags);
++
++static int
++_bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
++    bus_size_t size, int flags)
++{
++	struct rump_bus_dma_cookie *cookie = map->_dm_cookie;
++	int error = 0;
++
++	KASSERT(cookie != NULL);
++
++	cookie->id_bouncebuflen = round_page(size);
++	error = bus_dmamem_alloc(t, cookie->id_bouncebuflen,
++	    PAGE_SIZE, map->_dm_boundary, cookie->id_bouncesegs,
++	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
++	if (error) {
++		cookie->id_bouncebuflen = 0;
++		cookie->id_nbouncesegs = 0;
++		return error;
++	}
++
++	error = bus_dmamem_map(t, cookie->id_bouncesegs,
++	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
++	    (void **)&cookie->id_bouncebuf, flags);
++
++	if (error) {
++		bus_dmamem_free(t, cookie->id_bouncesegs,
++		    cookie->id_nbouncesegs);
++		cookie->id_bouncebuflen = 0;
++		cookie->id_nbouncesegs = 0;
++	} else {
++		cookie->id_flags |= RUMP_DMA_HAS_BOUNCE;
++	}
++
++	return (error);
++}
++
+ /*
+  * Common function for DMA map creation.  May be called by bus-specific
+  * DMA map creation functions.
+@@ -99,6 +162,7 @@ bus_dmamap_create(bus_dma_tag_t t, bus_s
+ 	bus_dmamap_t map;
+ 	void *mapstore;
+ 	size_t mapsize;
++	int error;
+ 
+ 	/*
+ 	 * Allocate and initialize the DMA map.  The end of the map
+@@ -123,14 +187,64 @@ bus_dmamap_create(bus_dma_tag_t t, bus_s
+ 	map->_dm_segcnt = nsegments;
+ 	map->_dm_maxmaxsegsz = maxsegsz;
+ 	map->_dm_boundary = boundary;
+-	map->_dm_bounce_thresh = 0;
++	map->_dm_bounce_thresh = t->_bounce_thresh;
+ 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
++	map->_dm_cookie = NULL;
+ 	map->dm_maxsegsz = maxsegsz;
+ 	map->dm_mapsize = 0;		/* no valid mappings */
+ 	map->dm_nsegs = 0;
+ 
+-	*dmamp = map;
+-	return (0);
++	error = 0;
++
++	if (map->_dm_bounce_thresh != 0)
++	  {
++	    /*
++	     * Allocate our cookie.
++	     */
++	    struct rump_bus_dma_cookie *cookie;
++	    ssize_t cookiesize;
++	    void *cookiestore;
++	    cookiesize = sizeof(struct rump_bus_dma_cookie) +
++	      (sizeof(bus_dma_segment_t) * map->_dm_segcnt);
++
++	    if ((cookiestore = kmem_intr_alloc(cookiesize,
++		(flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
++	      {
++		error = ENOMEM;
++	      }
++	    else
++	      {
++		cookie = (struct rump_bus_dma_cookie *)cookiestore;
++		cookie->id_flags = RUMP_DMA_MIGHT_NEED_BOUNCE;
++		map->_dm_cookie = cookie;
++
++		error = _bus_dma_alloc_bouncebuf(t, map, size, flags);
++	      }
++	  }
++
++	if (error)
++	  bus_dmamap_destroy(t, map);
++	else
++	  {
++	    *dmamp = map;
++	  }
++
++	return (error);
++}
++
++static void
++_bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
++{
++	struct rump_bus_dma_cookie *cookie = map->_dm_cookie;
++
++	KASSERT(cookie != NULL);
++
++	bus_dmamem_unmap(t, cookie->id_bouncebuf, cookie->id_bouncebuflen);
++	bus_dmamem_free(t, cookie->id_bouncesegs,
++	    cookie->id_nbouncesegs);
++	cookie->id_bouncebuflen = 0;
++	cookie->id_nbouncesegs = 0;
++	cookie->id_flags &= ~RUMP_DMA_HAS_BOUNCE;
+ }
+ 
+ /*
+@@ -140,6 +254,21 @@ bus_dmamap_create(bus_dma_tag_t t, bus_s
+ void
+ bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
+ {
++	struct rump_bus_dma_cookie *cookie = map->_dm_cookie;
++
++	/*
++	 * Free any bounce pages this map might hold.
++	 */
++	if (cookie != NULL) {
++		if (cookie->id_flags & RUMP_DMA_HAS_BOUNCE)
++			_bus_dma_free_bouncebuf(t, map);
++
++		const ssize_t cookiesize =
++		  (sizeof(struct rump_bus_dma_cookie) +
++		   (sizeof(bus_dma_segment_t) * map->_dm_segcnt));
++
++		kmem_intr_free(cookie, cookiesize);
++	}
+ 
+ 	size_t mapsize = sizeof(*map)
+ 	    + sizeof(bus_dma_segment_t [map->_dm_segcnt - 1]);
+@@ -178,13 +307,17 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t,
+ 		else
+ 			curaddr = vtophys(vaddr);
+ 
++		unsigned long long machaddr = rumpcomp_pci_virt_to_mach((void*)curaddr);
+ 		/*
+ 		 * If we're beyond the bounce threshold, notify
+ 		 * the caller.
+ 		 */
++
+ 		if (map->_dm_bounce_thresh != 0 &&
+-		    curaddr >= map->_dm_bounce_thresh)
+-			return (EINVAL);
++		    machaddr >= map->_dm_bounce_thresh)
++		  {
++		    return (EINVAL);
++		  }
+ 
+ 		/*
+ 		 * Compute the segment size, and adjust counts.
+@@ -209,7 +342,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t,
+ 		 */
+ 		if (first) {
+ 			map->dm_segs[seg].ds_addr
+-			    = rumpcomp_pci_virt_to_mach((void *)curaddr);
++			  = machaddr;
+ 			map->dm_segs[seg].ds_len = sgsize;
+ 			first = 0;
+ 		} else {
+@@ -218,13 +351,13 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t,
+ 			     map->dm_maxsegsz &&
+ 			    (map->_dm_boundary == 0 ||
+ 			     (map->dm_segs[seg].ds_addr & bmask) ==
+-			     (rumpcomp_pci_virt_to_mach((void*)curaddr)&bmask)))
++			     (machaddr & bmask)))
+ 				map->dm_segs[seg].ds_len += sgsize;
+ 			else {
+ 				if (++seg >= map->_dm_segcnt)
+ 					break;
+ 				map->dm_segs[seg].ds_addr =
+-				    rumpcomp_pci_virt_to_mach((void *)curaddr);
++				  machaddr;
+ 				map->dm_segs[seg].ds_len = sgsize;
+ 			}
+ 		}
+@@ -265,6 +398,7 @@ bus_dmamap_load(bus_dma_tag_t t, bus_dma
+ 	int seg, error;
+ 	struct vmspace *vm;
+ 
++	struct rump_bus_dma_cookie *cookie = map->_dm_cookie;
+ 	/*
+ 	 * Make sure that on error condition we return "no valid mappings".
+ 	 */
+@@ -285,10 +419,47 @@ bus_dmamap_load(bus_dma_tag_t t, bus_dma
+ 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags,
+ 		&lastaddr, &seg, 1);
+ 	if (error == 0) {
++		if (cookie != NULL)
++			cookie->id_flags &= ~RUMP_DMA_IS_BOUNCING;
+ 		map->dm_mapsize = buflen;
+ 		map->dm_nsegs = seg + 1;
++		return 0;
+ 	}
+-	return (error);
++
++	if (cookie == NULL ||
++	    (cookie->id_flags & RUMP_DMA_MIGHT_NEED_BOUNCE) == 0)
++		return error;
++
++	/*
++	 * First attempt failed; bounce it.
++	 */
++
++	/*
++	 * Allocate bounce pages, if necessary.
++	 */
++	if ((cookie->id_flags & RUMP_DMA_HAS_BOUNCE) == 0) {
++		error = _bus_dma_alloc_bouncebuf(t, map, buflen, flags);
++		if (error)
++			return (error);
++	}
++
++	/*
++	 * Cache a pointer to the caller's buffer and load the DMA map
++	 * with the bounce buffer.
++	 */
++	cookie->id_origbuf = buf;
++	cookie->id_origbuflen = buflen;
++	cookie->id_buftype = RUMP_DMA_BUFTYPE_LINEAR;
++	map->dm_nsegs = 0;
++
++	error = bus_dmamap_load(t, map, cookie->id_bouncebuf, buflen,
++	    p, flags);
++	if (error)
++		return (error);
++
++	/* ...so bus_dmamap_sync() knows we're bouncing */
++	cookie->id_flags |= RUMP_DMA_IS_BOUNCING;
++	return (0);
+ }
+ 
+ /*
+@@ -298,6 +469,8 @@ int
+ bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
+ 	struct mbuf *m0, int flags)
+ {
++	struct rump_bus_dma_cookie *cookie = map->_dm_cookie;
++
+ 	bus_addr_t lastaddr = 0;
+ 	int seg, error, first;
+ 	struct mbuf *m;
+@@ -358,7 +531,18 @@ bus_dmamap_load_mbuf(bus_dma_tag_t t, bu
+ 	if (error == 0) {
+ 		map->dm_mapsize = m0->m_pkthdr.len;
+ 		map->dm_nsegs = seg + 1;
++		return 0;
+ 	}
++
++	map->dm_nsegs = 0;
++
++	if (cookie == NULL ||
++	    (cookie->id_flags & RUMP_DMA_MIGHT_NEED_BOUNCE) == 0)
++		return error;
++
++	// Not implemented yet - Hurd doesn't use this interface.
++	panic("bus_dmamap_load_mbuf bounce buffers");
++
+ 	return (error);
+ }
+ 
+@@ -369,6 +553,8 @@ int
+ bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
+ 	struct uio *uio, int flags)
+ {
++	struct rump_bus_dma_cookie *cookie = map->_dm_cookie;
++
+ 	bus_addr_t lastaddr = 0;
+ 	int seg, i, error, first;
+ 	bus_size_t minlen, resid;
+@@ -405,7 +591,18 @@ bus_dmamap_load_uio(bus_dma_tag_t t, bus
+ 	if (error == 0) {
+ 		map->dm_mapsize = uio->uio_resid;
+ 		map->dm_nsegs = seg + 1;
++		return 0;
+ 	}
++
++	map->dm_nsegs = 0;
++
++	if (cookie == NULL ||
++	    (cookie->id_flags & RUMP_DMA_MIGHT_NEED_BOUNCE) == 0)
++		return error;
++
++	// Not implemented yet - Hurd doesn't use this interface.
++	panic("bus_dmamap_load_uio bounce buffers");
++
+ 	return (error);
+ }
+ 
+@@ -428,6 +625,16 @@ bus_dmamap_load_raw(bus_dma_tag_t t, bus
+ void
+ bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
+ {
++	struct rump_bus_dma_cookie *cookie = map->_dm_cookie;
++
++	/*
++	 * If we have bounce pages, free them, unless they're
++	 * reserved for our exclusive use.
++	 */
++	if (cookie != NULL) {
++		cookie->id_flags &= ~RUMP_DMA_IS_BOUNCING;
++		cookie->id_buftype = RUMP_DMA_BUFTYPE_INVALID;
++	}
+ 
+ 	/*
+ 	 * No resources to free; just mark the mappings as
+@@ -438,14 +645,137 @@ bus_dmamap_unload(bus_dma_tag_t t, bus_d
+ 	map->dm_nsegs = 0;
+ }
+ 
++#if defined(__i386__) || defined(__x86_64__)
++
++#define PRIxBUSADDR	"lx"
++#define PRIxBUSSIZE	"lx"
++
+ void
+ bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
+ 	bus_addr_t offset, bus_size_t len, int ops)
+ {
++	struct rump_bus_dma_cookie *cookie = map->_dm_cookie;
++
++	/*
++	 * Mixing PRE and POST operations is not allowed.
++	 */
++	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
++	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
++		panic("%s: mix PRE and POST", __func__);
++
++	if ((ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTREAD)) != 0) {
++		KASSERTMSG(offset < map->dm_mapsize,
++		    "bad offset 0x%"PRIxBUSADDR" >= 0x%"PRIxBUSSIZE,
++		    offset, map->dm_mapsize);
++		KASSERTMSG(len <= map->dm_mapsize - offset,
++		    "bad length 0x%"PRIxBUSADDR" + 0x%"PRIxBUSSIZE
++		    " > 0x%"PRIxBUSSIZE,
++		    offset, len, map->dm_mapsize);
++	}
++
++	/*
++	 * BUS_DMASYNC_POSTREAD: The caller has been alerted to DMA
++	 * completion by reading a register or DMA descriptor, and the
++	 * caller is about to read out of the DMA memory buffer that
++	 * the device just filled.
++	 *
++	 * => LFENCE ensures that these happen in order so that the
++	 *    caller, or the bounce buffer logic here, doesn't proceed
++	 *    to read any stale data from cache or speculation.  x86
++	 *    never reorders loads from wp/wt/wb or uc memory, but it
++	 *    may execute loads from wc/wc+ memory early, e.g. with
++	 *    BUS_SPACE_MAP_PREFETCHABLE.
++	 */
++	if (ops & BUS_DMASYNC_POSTREAD)
++		x86_lfence();
++
++	/*
++	 * If we're not bouncing, just return; nothing to do.
++	 */
++	if (len == 0 || cookie == NULL ||
++	    (cookie->id_flags & RUMP_DMA_IS_BOUNCING) == 0)
++		goto end;
++
++	switch (cookie->id_buftype) {
++	case RUMP_DMA_BUFTYPE_LINEAR:
++		/*
++		 * Nothing to do for pre-read.
++		 */
+ 
+-	/* XXX: this might need some MD tweaks */
+-	membar_sync();
++		if (ops & BUS_DMASYNC_PREWRITE) {
++			/*
++			 * Copy the caller's buffer to the bounce buffer.
++			 */
++			memcpy((char *)cookie->id_bouncebuf + offset,
++			    (char *)cookie->id_origbuf + offset, len);
++		}
++
++		if (ops & BUS_DMASYNC_POSTREAD) {
++			/*
++			 * Copy the bounce buffer to the caller's buffer.
++			 */
++			memcpy((char *)cookie->id_origbuf + offset,
++			    (char *)cookie->id_bouncebuf + offset, len);
++		}
++
++		/*
++		 * Nothing to do for post-write.
++		 */
++		break;
++
++	case RUMP_DMA_BUFTYPE_INVALID:
++		panic("%s: RUMP_DMA_BUFTYPE_INVALID", __func__);
++		break;
++	default:
++		panic("%s: unknown buffer type %d", __func__,
++		    cookie->id_buftype);
++		break;
++	}
++end:
++	/*
++	 * BUS_DMASYNC_PREREAD: The caller may have previously been
++	 * using a DMA memory buffer, with loads and stores, and is
++	 * about to trigger DMA by writing to a register or DMA
++	 * descriptor.
++	 *
++	 * => SFENCE ensures that the stores happen in order, in case
++	 *    the latter one is non-temporal or to wc/wc+ memory and
++	 *    thus may be executed early.  x86 never reorders
++	 *    load;store to store;load for any memory type, so no
++	 *    barrier is needed for prior loads.
++	 *
++	 * BUS_DMASYNC_PREWRITE: The caller has just written to a DMA
++	 * memory buffer, or we just wrote to to the bounce buffer,
++	 * data that the device needs to use, and the caller is about
++	 * to trigger DMA by writing to a register or DMA descriptor.
++	 *
++	 * => SFENCE ensures that these happen in order so that any
++	 *    buffered stores are visible to the device before the DMA
++	 *    is triggered.  x86 never reorders (non-temporal) stores
++	 *    to wp/wt/wb or uc memory, but it may reorder two stores
++	 *    if one is to wc/wc+ memory, e.g. if the DMA descriptor is
++	 *    mapped with BUS_SPACE_MAP_PREFETCHABLE.
++	 */
++	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE))
++		x86_sfence();
++
++	/*
++	 * BUS_DMASYNC_POSTWRITE: The caller has been alerted to DMA
++	 * completion by reading a register or DMA descriptor, and the
++	 * caller may proceed to reuse the DMA memory buffer, with
++	 * loads and stores.
++	 *
++	 * => No barrier is needed.  Since the DMA memory buffer is not
++	 *    changing (we're sending data to the device, not receiving
++	 *    data from the device), prefetched loads are safe.  x86
++	 *    never reoreders load;store to store;load for any memory
++	 *    type, so early execution of stores prior to witnessing
++	 *    the DMA completion is not possible.
++	 */
+ }
++#else
++#error "bus_dmamap_sync unsupported"
++#endif
+ 
+ /*
+  * Common function for freeing DMA-safe memory.  May be called by
+Index: rumpkernel/buildrump.sh/src/sys/rump/include/sys/bus.h
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/rump/include/sys/bus.h
++++ rumpkernel/buildrump.sh/src/sys/rump/include/sys/bus.h
+@@ -41,7 +41,12 @@ typedef unsigned long bus_space_tag_t;
+ typedef unsigned long bus_space_handle_t;
+ 
+ /* bus dma defs */
+-typedef void *bus_dma_tag_t;
++struct bus_dma_tag {
++	unsigned long long _bounce_thresh;
++};
++
++typedef struct bus_dma_tag *bus_dma_tag_t;
++
+ #define BUS_DMA_TAG_VALID(_tag_) ((_tag_) != NULL)
+ 
+ typedef struct {
+@@ -56,7 +61,7 @@ typedef struct {
+ 	int _dm_segcnt;
+ 	bus_size_t _dm_maxmaxsegsz;
+ 	bus_size_t _dm_boundary;
+-	bus_addr_t _dm_bounce_thresh;
++	unsigned long long _dm_bounce_thresh;
+ 	int _dm_flags;
+ 	void *_dm_cookie;
+ 
+Index: rumpkernel/buildrump.sh/src/sys/rump/librump/rumpkern/arch/i386/Makefile.inc
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/rump/librump/rumpkern/arch/i386/Makefile.inc
++++ rumpkernel/buildrump.sh/src/sys/rump/librump/rumpkern/arch/i386/Makefile.inc
+@@ -5,3 +5,5 @@
+ 
+ .PATH:	${RUMPTOP}/../arch/i386/i386
+ SRCS+=	kobj_machdep.c
++
++SRCS+=  rump_i386_cpufunc.S
+Index: rumpkernel/buildrump.sh/src/sys/rump/librump/rumpkern/arch/i386/rump_i386_cpufunc.S
+===================================================================
+--- /dev/null
++++ rumpkernel/buildrump.sh/src/sys/rump/librump/rumpkern/arch/i386/rump_i386_cpufunc.S
+@@ -0,0 +1,19 @@
++#include <machine/asm.h>
++
++ENTRY(x86_lfence)
++	lock
++	addl	$0, -4(%esp)
++	ret
++END(x86_lfence)
++
++ENTRY(x86_sfence)
++	lock
++	addl	$0, -4(%esp)
++	ret
++END(x86_sfence)
++
++ENTRY(x86_mfence)
++	lock
++	addl	$0, -4(%esp)
++	ret
++END(x86_mfence)
+Index: rumpkernel/buildrump.sh/src/sys/rump/librump/rumpkern/arch/x86_64/Makefile.inc
+===================================================================
+--- rumpkernel.orig/buildrump.sh/src/sys/rump/librump/rumpkern/arch/x86_64/Makefile.inc
++++ rumpkernel/buildrump.sh/src/sys/rump/librump/rumpkern/arch/x86_64/Makefile.inc
+@@ -8,3 +8,5 @@ SRCS+=	kobj_machdep.c
+ 
+ .PATH:	${RUMPTOP}/librump/rumpkern/arch/generic
+ SRCS+=	rump_generic_directmap.c
++
++SRCS+=  rump_amd64_cpufunc.S
+Index: rumpkernel/buildrump.sh/src/sys/rump/librump/rumpkern/arch/x86_64/rump_amd64_cpufunc.S
+===================================================================
+--- /dev/null
++++ rumpkernel/buildrump.sh/src/sys/rump/librump/rumpkern/arch/x86_64/rump_amd64_cpufunc.S
+@@ -0,0 +1,16 @@
++#include <machine/asm.h>
++
++ENTRY(x86_lfence)
++	lfence
++	ret
++END(x86_lfence)
++
++ENTRY(x86_sfence)
++	sfence
++	ret
++END(x86_sfence)
++
++ENTRY(x86_mfence)
++	mfence
++	ret
++END(x86_mfence)

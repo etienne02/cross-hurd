@@ -1,0 +1,22 @@
+pkgbase = gnumach
+	pkgdesc = gnumach
+	pkgver = 1.8
+	pkgrel = 1
+	url = https://git.savannah.gnu.org/git/hurd/gnumach.git
+	arch = x86_64
+	license = GPL-2.0-or-later
+	makedepends = mig
+	makedepends = texinfo
+	options = !debug
+	options = !strip
+	source = git+https://git.savannah.gnu.org/git/hurd/gnumach.git#commit=0fa7374deaeb6d5797b85155f508efd7f6657c5b
+	sha256sums = 211ce77864a1025bcc734b994e6662a777e6dd8b5057e9f3cbbeca84c18df218
+
+pkgname = gnumach
+	pkgdesc = The gnumach kernel
+
+pkgname = gnumach-headers
+	pkgdesc = Headers for the gnumach kernel
+
+pkgname = gnumach-docs
+	pkgdesc = Documentation for the gnumach kernel

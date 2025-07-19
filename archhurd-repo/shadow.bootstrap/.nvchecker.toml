@@ -1,0 +1,6 @@
+[shadow]
+source = "git"
+git = "https://gitlab.archlinux.org/archlinux/packaging/upstream/shadow"
+include_regex = '^[\d.]+-(arch[\d]+)$'
+from_pattern = '([\d.]+)-(arch[\d]+)'
+to_pattern = '\1.\2'

@@ -1,0 +1,13 @@
+pkgbase = mig
+	pkgdesc = Mach Interface Generator
+	pkgver = 1.8
+	pkgrel = 1
+	url = http://www.gnu.org/software/hurd/microkernel/mach/mig.html
+	arch = x86_64
+	license = GPL-2.0-or-later
+	depends = gnumach-headers
+	depends = glibc
+	source = git+https://git.savannah.gnu.org/git/hurd/mig.git#commit=d27138506196f2fba644568d596851208db4abca
+	sha256sums = f2d004c21eed5f0827f3a88c4d4afa24d2fd70186a3f5ffebe1e393bd4485bf1
+
+pkgname = mig

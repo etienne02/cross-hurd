@@ -1,0 +1,7 @@
+[curl]
+source = 'git'
+git = 'https://github.com/curl/curl.git'
+prefix = 'curl-'
+from_pattern = '_'
+to_pattern = '.'
+exclude_regex = ".*(tiny|beta).*"

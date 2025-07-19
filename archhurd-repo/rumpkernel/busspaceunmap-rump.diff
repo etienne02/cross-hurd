@@ -1,0 +1,77 @@
+diff --git a/netbsd/sys/rump/dev/lib/libpci/pci_user.h b/netbsd/sys/rump/dev/lib/libpci/pci_user.h
+index 75ddcbb6..7f107018 100644
+--- a/netbsd/sys/rump/dev/lib/libpci/pci_user.h
++++ b/netbsd/sys/rump/dev/lib/libpci/pci_user.h
+@@ -12,6 +12,7 @@
+ #include "rumpcomp_userfeatures_pci.h"
+ 
+ void *rumpcomp_pci_map(unsigned long, unsigned long);
++void rumpcomp_pci_unmap(uintptr_t, uintptr_t);
+ int rumpcomp_pci_confread(unsigned, unsigned, unsigned, int, unsigned int *);
+ int rumpcomp_pci_confwrite(unsigned, unsigned, unsigned, int, unsigned int);
+ 
+diff --git a/netbsd/sys/rump/dev/lib/libpci/rumpdev_bus_space.c b/netbsd/sys/rump/dev/lib/libpci/rumpdev_bus_space.c
+index 8d97ea0d..4da5b224 100644
+--- a/netbsd/sys/rump/dev/lib/libpci/rumpdev_bus_space.c
++++ b/netbsd/sys/rump/dev/lib/libpci/rumpdev_bus_space.c
+@@ -275,7 +275,7 @@ bus_space_unmap(bus_space_tag_t bst, bus_space_handle_t bsh,
+ 	if (bst == 0)
+ 		return;
+ 
+-	panic("%s: unimplemented", __func__);
++	rumpcomp_pci_unmap(bsh, size);
+ }
+ 
+ void
+diff --git a/pci-userspace/src-gnu/pci_user-gnu.c b/pci-userspace/src-gnu/pci_user-gnu.c
+index ef48ab2a..92da7ae2 100644
+--- a/pci-userspace/src-gnu/pci_user-gnu.c
++++ b/pci-userspace/src-gnu/pci_user-gnu.c
+@@ -173,6 +173,30 @@ found:
+ 	return pci_devices[i]->regions[residx].memory;
+ }
+ 
++void
++rumpcomp_pci_unmap(uintptr_t bus_handle, uintptr_t size)
++{
++	int residx;
++	int i;
++
++	/*
++	 * We search the pciaccess memory structure for the address
++	 */
++	for (i = 0; i < numdevs; i++) {
++		for (residx = 0; residx < 6; residx++) {
++			if (pci_devices[i]->regions[residx].size != size)
++				continue;
++			if ((uintptr_t)pci_devices[i]->regions[residx].memory == bus_handle)
++				goto found;
++		}
++	}
++	return;
++
++found:
++	pci_device_unmap_range(pci_devices[i], (void *)bus_handle, (pciaddr_t)size);
++	pci_devices[i]->regions[residx].memory = NULL;
++}
++
+ int
+ rumpcomp_pci_confread(unsigned bus, unsigned dev, unsigned fun,
+ 	int reg, unsigned int *rv)
+diff --git a/pci-userspace/src-linux-uio/pci_user-uio_linux.c b/pci-userspace/src-linux-uio/pci_user-uio_linux.c
+index 699ead1b..c0b5f180 100644
+--- a/pci-userspace/src-linux-uio/pci_user-uio_linux.c
++++ b/pci-userspace/src-linux-uio/pci_user-uio_linux.c
+@@ -116,6 +116,12 @@ rumpcomp_pci_map(unsigned long addr, unsigned long len)
+ 	return mem;
+ }
+ 
++void
++rumpcomp_pci_unmap(uintptr_t bus_handle, uintptr_t size)
++{
++	/* TODO */
++}
++
+ static int
+ openconf(unsigned dev, int mode)
+ {

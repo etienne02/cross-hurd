@@ -1,0 +1,6 @@
+[nspr]
+source = "git"
+git = "https://github.com/mozilla/nspr.git"
+include_regex = 'NSPR_(\d+_)+RTM'
+from_pattern = 'NSPR_(\d+)_(\d+)_RTM'
+to_pattern = '\1.\2'

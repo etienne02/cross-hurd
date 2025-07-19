@@ -1,0 +1,4 @@
+[nss]
+source = "jq"
+url = "https://hg.mozilla.org/projects/nss/json-tags"
+filter = '.tags[].tag | select(test("NSS_.*_RTM")) | split("_")[1:-1] | join(".")'

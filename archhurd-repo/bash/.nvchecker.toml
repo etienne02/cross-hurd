@@ -1,0 +1,16 @@
+["bash:major"]
+source = "regex"
+url = "https://ftp.gnu.org/gnu/bash/"
+regex = 'bash-([\.\d]+)\.tar\.gz'
+exclude_regex = ".*(pre|a|alpha|b|beta|r|rc|RC|BETA|ALPHA).*"
+
+["bash:patch"]
+source = "regex"
+url = "https://ftp.gnu.org/gnu/bash/bash-5.3-patches/"
+regex = 'bash[\d]+-0*([\.\d]+)'
+exclude_regex = ".*(pre|a|alpha|b|beta|r|rc|RC|BETA|ALPHA).*"
+
+[bash]
+source = "combiner"
+from = ["bash:major", "bash:patch"]
+format = "$1.$2"

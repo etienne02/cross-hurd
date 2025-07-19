@@ -1,0 +1,4 @@
+[diffutils]
+source = "git"
+git = "https://git.savannah.gnu.org/git/diffutils.git"
+prefix = "v"

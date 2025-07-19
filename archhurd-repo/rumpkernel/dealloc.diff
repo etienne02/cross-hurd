@@ -1,0 +1,13 @@
+Index: rumpkernel/pci-userspace/src-gnu/pci_user-gnu.c
+===================================================================
+--- rumpkernel.orig/pci-userspace/src-gnu/pci_user-gnu.c
++++ rumpkernel/pci-userspace/src-gnu/pci_user-gnu.c
+@@ -503,6 +503,8 @@ rumpcomp_pci_virt_to_mach(void *virt)
+ 	if (KERN_SUCCESS != ret)
+ 		err(ret, "mach_vm_object_pages");
+ 
++	mach_port_deallocate(mach_task_self(), object);
++
+ 	for (size_t i=0; (i<pagesCnt); i++){
+ 		vm_page_info_t *vpi;
+ 		vm_address_t vaddr_obj;

@@ -1,0 +1,5 @@
+[gcc]
+source = 'git'
+git = 'https://forge.sourceware.org/gcc/gcc.git'
+include_regex = 'releases/gcc-[\d\.]+'
+prefix = 'releases/gcc-'

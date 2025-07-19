@@ -1,0 +1,14 @@
+# Configuration for encrypted block devices.
+# See crypttab(5) for details.
+
+# NOTE: Add the x-initrd.attach option to devices holding the root
+#       partition and any other devices that need to be unlocked
+#       in the initramfs stage.
+
+# <name>       <device>                                     <password>              <options>
+# root         /dev/disk/by-designator/root-luks            none                    x-initrd.attach,tpm2-device=auto
+# home         UUID=b8ad5c18-f445-495d-9095-c9ec4f9d2f37    /etc/mypassword1
+# data1        /dev/sda3                                    /etc/mypassword2
+# data2        /dev/sda5                                    /etc/cryptfs.key
+# swap         /dev/sdx4                                    /dev/urandom            swap,cipher=aes-cbc-essiv:sha256,size=256
+# vol          /dev/sdb7                                    none

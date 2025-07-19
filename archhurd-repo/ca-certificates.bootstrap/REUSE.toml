@@ -1,0 +1,37 @@
+version = 1
+
+[[annotations]]
+path = [
+    "PKGBUILD",
+    "README.md",
+    "keys/**",
+    ".SRCINFO",
+    ".nvchecker.toml",
+    "*.install",
+    "*.sysusers",
+    "*.tmpfiles",
+    "*.logrotate",
+    "*.pam",
+    "*.service",
+    "*.socket",
+    "*.timer",
+    "*.desktop",
+    "*.hook",
+]
+SPDX-FileCopyrightText = "Arch Linux contributors"
+SPDX-License-Identifier = "0BSD"
+
+[[annotations]]
+path = [
+    "README.etc",
+    "README.etcssl",
+    "README.extr",
+    "README.java",
+    "README.java",
+    "README.src",
+    "README.usr",
+    "update-ca-trust",
+    "update-ca-trust.8.txt",
+]
+SPDX-FileCopyrightText = "Red Hat, Inc."
+SPDX-License-Identifier = "GPL-2.0-or-later"

@@ -1,0 +1,56 @@
+# Maintainer: Johannes Löthberg <johannes@kyriasis.com>
+# Maintainer: Carl Smedstad <carsme@archlinux.org>
+# Contributor: carstene1ns <arch carsten-teibes de> - http://git.io/ctPKG
+# Contributor: 謝致邦 <Yeking@Red54.com>
+# Contributor: cantabile <cantabile dot desu at gmail dot com>
+# Contributor: reMiND <detanator@gmail.com>
+
+pkgname=rhash
+_pkgname=RHash
+pkgver=1.4.6
+pkgrel=1
+pkgdesc='Utility for verifying hash sums of files'
+arch=('x86_64')
+url='https://github.com/rhash/RHash'
+license=('0BSD')
+depends=('glibc')
+provides=('librhash.so')
+backup=('etc/rhashrc')
+source=(
+  "$url/archive/v$pkgver/$pkgname-$pkgver.tar.gz"
+  "$pkgname-$pkgver.tar.gz.asc::$url/releases/download/v$pkgver/v$pkgver.tar.gz.asc"
+)
+sha512sums=('c125b71ec36cce2ec31057239cac8b987555f5e3b152dacb6386b905f8cc4d449c1de5b53e5a5206a2d87975681225c9b54e5826c10ffd91b3440f8595d22b15'
+            'SKIP')
+validpgpkeys=('2875F6B1C2D27A4F0C8AF60B2A714497E37363AE') # Aleksey Kravchenko <rhash.admin@gmail.com>
+
+prepare() {
+  cd $_pkgname-$pkgver
+  ./configure \
+    --prefix=/usr \
+    --sysconfdir=/etc \
+    --extra-cflags="$CFLAGS" \
+    --extra-ldflags="$LDFLAGS"
+}
+
+build() {
+  cd $_pkgname-$pkgver
+  make
+}
+
+check() {
+  cd $_pkgname-$pkgver
+  make test test-lib
+}
+
+package() {
+  cd $_pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+  install -vDm644 -t "$pkgdir/usr/share/licenses/$pkgname" COPYING
+
+  # Install library, since the makefiles are still broken
+  make -C librhash DESTDIR="$pkgdir" \
+    install-lib-headers \
+    install-lib-shared \
+    install-so-link
+}

@@ -1,0 +1,4 @@
+[wget]
+source = "git"
+git = "https://gitlab.com/gnuwget/wget.git"
+prefix = "v"

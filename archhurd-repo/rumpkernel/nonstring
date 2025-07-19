@@ -1,0 +1,80 @@
+---
+ buildrump.sh/src/lib/libc/gen/arc4random.c      |    2 +-
+ buildrump.sh/src/sys/crypto/chacha/chacha_ref.c |    2 +-
+ buildrump.sh/src/sys/dev/pci/eap.c              |    2 +-
+ buildrump.sh/src/sys/dev/scsipi/scsipi_base.c   |    2 +-
+ buildrump.sh/src/sys/fs/cd9660/cd9660_rrip.c    |    2 +-
+ buildrump.sh/src/sys/fs/msdosfs/direntry.h      |    4 ++--
+ 6 files changed, 7 insertions(+), 7 deletions(-)
+
+--- a/buildrump.sh/src/lib/libc/gen/arc4random.c
++++ b/buildrump.sh/src/lib/libc/gen/arc4random.c
+@@ -129,7 +129,7 @@ rotate(uint32_t u, unsigned c)
+ 	(c) += (d); (b) ^= (c); (b) = rotate((b),  7);			      \
+ } while (0)
+ 
+-static const uint8_t crypto_core_constant32[16] = "expand 32-byte k";
++static const uint8_t crypto_core_constant32[16] __attribute__((nonstring)) = "expand 32-byte k";
+ 
+ static void
+ crypto_core(uint8_t *out, const uint8_t *in, const uint8_t *k,
+--- a/buildrump.sh/src/sys/crypto/chacha/chacha_ref.c
++++ b/buildrump.sh/src/sys/crypto/chacha/chacha_ref.c
+@@ -61,7 +61,7 @@ rol32(uint32_t u, unsigned c)
+ 	(c) += (d); (b) ^= (c); (b) = rol32((b),  7);			      \
+ } while (/*CONSTCOND*/0)
+ 
+-const uint8_t chacha_const32[16] = "expand 32-byte k";
++const uint8_t chacha_const32[16] __attribute__((nonstring)) = "expand 32-byte k";
+ 
+ static void
+ chacha_core_ref(uint8_t out[restrict static 64], const uint8_t in[static 16],
+--- a/buildrump.sh/src/sys/dev/scsipi/scsipi_base.c
++++ b/buildrump.sh/src/sys/dev/scsipi/scsipi_base.c
+@@ -1172,7 +1172,7 @@ scsipi_test_unit_ready(struct scsipi_per
+ }
+ 
+ static const struct scsipi_inquiry3_pattern {
+-	const char vendor[8];
++	const char vendor[8] __attribute__((nonstring));
+ 	const char product[16];
+ 	const char revision[4];
+ } scsipi_inquiry3_quirk[] = {
+--- a/buildrump.sh/src/sys/fs/cd9660/cd9660_rrip.c
++++ b/buildrump.sh/src/sys/fs/cd9660/cd9660_rrip.c
+@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.
+ #include <fs/cd9660/iso_rrip.h>
+ 
+ typedef struct {
+-	char type[2];
++	char type[2] __attribute__((nonstring));
+ 	int (*func)(void *, ISO_RRIP_ANALYZE *);
+ 	void (*func2)(void *, ISO_RRIP_ANALYZE *);
+ 	int result;
+--- a/buildrump.sh/src/sys/fs/msdosfs/direntry.h
++++ b/buildrump.sh/src/sys/fs/msdosfs/direntry.h
+@@ -53,11 +53,11 @@
+  * Structure of a dos directory entry.
+  */
+ struct direntry {
+-	uint8_t		deName[8];	/* filename, blank filled */
++	uint8_t		deName[8] __attribute__((nonstring));	/* filename, blank filled */
+ #define	SLOT_EMPTY	0x00		/* slot has never been used */
+ #define	SLOT_E5		0x05		/* the real value is 0xe5 */
+ #define	SLOT_DELETED	0xe5		/* file in this slot deleted */
+-	uint8_t		deExtension[3];	/* extension, blank filled */
++	uint8_t		deExtension[3] __attribute__((nonstring));	/* extension, blank filled */
+ 	uint8_t		deAttributes;	/* file attributes */
+ #define	ATTR_NORMAL	0x00		/* normal file */
+ #define	ATTR_READONLY	0x01		/* file is readonly */
+--- a/buildrump.sh/src/sys/dev/pci/eap.c
++++ b/buildrump.sh/src/sys/dev/pci/eap.c
+@@ -205,7 +205,7 @@ static const struct midi_hw_if eap_midi_
+ #endif
+ 
+ static struct audio_device eap_device = {
+-	"Ensoniq AudioPCI",
++	"EnsoniqAudioPCI",
+ 	"",
+ 	"eap"
+ };

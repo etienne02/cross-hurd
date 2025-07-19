@@ -1,0 +1,14 @@
+pkgbase = lmdb
+	pkgdesc = Symas Lightning Memory-Mapped Database
+	pkgver = 1.0.0
+	pkgrel = 1
+	url = https://symas.com/lmdb
+	arch = x86_64
+	license = OLDAP-2.8
+	makedepends = git
+	depends = glibc
+	options = !emptydirs
+	source = git+https://git.openldap.org/openldap/openldap.git#tag=LMDB_1.0.0
+	sha512sums = 2de791a9d68989dcb47a34ca05e0e745ac7e70c436c856174ccdd0ed14e110fbb758e65c120b67ba98ef5e662b79cf2bea24fd63a6dd46de927b011d08383d56
+
+pkgname = lmdb

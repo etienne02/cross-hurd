@@ -1,0 +1,4 @@
+[lzo]
+source = 'regex'
+url = 'https://www.oberhumer.com/opensource/lzo/'
+regex = 'lzo-([\d.]+).tar'

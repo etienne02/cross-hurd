@@ -1,0 +1,5 @@
+[elfutils]
+source = "git"
+git = "https://forge.sourceware.org/elfutils/elfutils-mirror.git"
+prefix = "elfutils-"
+use_max_tag = true

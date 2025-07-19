@@ -1,0 +1,7 @@
+[libxkbcommon]
+source = "git"
+git = "https://github.com/xkbcommon/libxkbcommon.git"
+include_regex = 'xkbcommon-\d+(\.\d+)*'
+prefix = "xkbcommon-"
+from_pattern = '-([a-z])'
+to_pattern = '\1'

@@ -1,0 +1,4 @@
+[libdaemon]
+source = 'regex'
+url = 'https://0pointer.de/lennart/projects/libdaemon/'
+regex = 'libdaemon-([\d.]+)\.tar\.gz'

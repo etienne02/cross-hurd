@@ -1,0 +1,4 @@
+[bzip2]
+source = 'git'
+git = 'git://sourceware.org/git/bzip2.git'
+prefix = 'bzip2-'

@@ -1,0 +1,141 @@
+# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# Maintainer: Levente Polyak <anthraxx[at]archlinux[dot]org>
+# Contributor: Anatol Pomozov <anatol dot pomozov at gmail>
+
+pkgname=meson
+pkgver=1.12.1
+pkgrel=2
+pkgdesc="High productivity build system"
+url="https://mesonbuild.com/"
+arch=(any)
+license=(Apache-2.0)
+depends=(
+  bash
+  ninja
+  python
+)
+makedepends=(
+  git
+  python-aiohttp
+  python-build
+  python-installer
+  python-setuptools
+  python-strictyaml
+  python-wheel
+)
+checkdepends=(
+  boost
+  boost-libs
+  byacc
+  clang
+  cmake
+  cuda
+  cython
+  dmd
+  doxygen
+  gcc-fortran
+  gcc-objc
+  git
+  glib2-devel
+  glibc-locales
+  gmock
+  gnustep-base
+  gobject-introspection
+  graphviz
+  gtest
+  gtk-doc
+  gtk-sharp-3
+  gtk3
+  gtkmm3
+  hotdoc
+  itstool
+  java-environment=8
+  libelf
+  libpcap
+  libwmf
+  llvm
+  mercurial
+  mono
+  nasm
+  netcdf-fortran
+  openmpi
+  openssh
+  protobuf
+  pypy3
+  python-gobject
+  python-importlib-metadata
+  python-lxml
+  python-pip
+  python-pytest-xdist
+  qt5-base
+  qt5-tools
+  qt6-base
+  qt6-declarative
+  qt6-tools
+  rust
+  rust-bindgen
+  sdl2
+  vala
+  valgrind
+  vulkan-headers
+  vulkan-icd-loader
+  vulkan-validation-layers
+  wayland
+  wayland-protocols
+  wxwidgets-gtk3
+  zlib-static
+)
+source=(
+  "git+https://github.com/mesonbuild/meson?signed#tag=$pkgver"
+  arch-meson
+  arch-meson-check-wraps
+  cross-lib32
+  native-clang
+)
+b2sums=('4995b1a06b106c0cda8d3cbd2d09d4069422875abbeb0e7717579d477ea36714a08c92fab938114fa53d3e348f79ecf15a87a8aff0d5f4b0e0c6f07155c68701'
+        'ad9c206dd8ceab44e5f499e50a75736c4e8b803201e96ac07da6b088a166154f1478b10749a87c9dca2815a50f77b5c7f404b4e424d823bae5c8620c3aa05487'
+        '1d810102755d6d8b712848f39ef3097cd67f1948a545a8659829cf2efb9a8e9751d7b800e678989ff972cb63a5b57b4ea84fe011b291279a967a3660240cc1f2'
+        'e0c54558b3cf06992a59e4df0a66e51e51ba360f8ac44ca6ad6fbd62f9f8890e575db2773dd221438b220a09560af7f60582472fda1df292a3f0697040c9bd58'
+        '7d88929d5a3b49d91c5c9969f19d9b47f3151706526b889515acaeda0141257d5115875ac84832e9ea46f83a7700d673adcc5db84b331cd798c70ae6e90eac1e')
+validpgpkeys=(
+  19E2D6D9B46D8DAA6288F877C24E631BABB1FE70 # Jussi Pakkanen <jpakkane@gmail.com>
+  BD27B07A5EF45C2ADAF70E0484818A6819AF4A9B # Eli Schwartz <eschwartz93@gmail.com>
+)
+
+prepare() {
+  cd meson
+
+  # Remove flaky test
+  # https://github.com/mesonbuild/meson/issues/10104
+  rm -r "test cases/linuxlike/13 cmake dependency"
+}
+
+build() {
+  cd meson
+  python -m build --wheel --no-isolation
+}
+
+check() {
+  cd meson
+  CMAKE_POLICY_VERSION_MINIMUM=3.5 LC_ALL=en_US.UTF-8 \
+    CPPFLAGS= CFLAGS= CXXFLAGS= LDFLAGS= FFLAGS=-I/usr/include \
+    ./run_tests.py --failfast
+}
+
+package() {
+  cd meson
+  python -m installer --destdir="$pkgdir" --prefix="/usr" dist/*.whl
+
+  install -d "$pkgdir/usr/share/vim/vimfiles"
+  cp -rt "$pkgdir/usr/share/vim/vimfiles" data/syntax-highlighting/vim/*/
+
+  install -Dm644 data/shell-completions/bash/* -t "$pkgdir/usr/share/bash-completion/completions"
+  install -Dm644 data/shell-completions/zsh/*  -t "$pkgdir/usr/share/zsh/site-functions"
+
+  install -D ../arch-meson* -t "$pkgdir/usr/bin"
+
+  install -Dm644 ../cross-lib32 "$pkgdir/usr/share/meson/cross/lib32"
+  install -Dm644 ../native-clang "$pkgdir/usr/share/meson/native/clang"
+}
+
+# vim:set sw=2 sts=-1 et:

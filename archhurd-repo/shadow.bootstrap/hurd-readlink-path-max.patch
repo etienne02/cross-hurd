@@ -1,0 +1,31 @@
+From eb3500670348a740c015743ab4e91624bd2b770e Mon Sep 17 00:00:00 2001
+From: Samuel Thibault <samuel.thibault@ens-lyon.org>
+Date: Sat, 22 Feb 2025 11:22:48 +0100
+Subject: [PATCH] lib/fs/readlink/areadlink.h: areadlink(): Avoid
+ inconditionally using PATH_MAX
+
+86451e374b90 ("lib/fs/readlink/areadlink.h: areadlink(): Use PATH_MAX
+instead of a magic value") introduced using PATH_MAX, but e.g. GNU/Hurd does
+not define such a limitation.
+
+Signed-off-by: Samuel Thibault <samuel.thibault@ens-lyon.org>
+---
+ lib/fs/readlink/areadlink.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/lib/fs/readlink/areadlink.h b/lib/fs/readlink/areadlink.h
+index de931a7b3..73326e0ab 100644
+--- a/lib/fs/readlink/areadlink.h
++++ b/lib/fs/readlink/areadlink.h
+@@ -27,7 +27,11 @@ inline char *areadlink(const char *link);
+ inline char *
+ areadlink(const char *link)
+ {
++#ifdef PATH_MAX
+ 	size_t  size = PATH_MAX;
++#else
++	size_t  size = 1024;
++#endif
+ 
+ 	while (true) {
+ 		int   len;

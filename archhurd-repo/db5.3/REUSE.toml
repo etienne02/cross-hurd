@@ -1,0 +1,39 @@
+version = 1
+
+[[annotations]]
+path = [
+    "PKGBUILD",
+    "README.md",
+    "keys/**",
+    ".SRCINFO",
+    ".gitignore",
+    ".nvchecker.toml",
+    "*.install",
+    "*.sysusers",
+    "*sysusers.conf",
+    "*.tmpfiles",
+    "*tmpfiles.conf",
+    "*.logrotate",
+    "*.pam",
+    "*.service",
+    "*.socket",
+    "*.timer",
+    "*.desktop",
+    "*.hook",
+]
+SPDX-FileCopyrightText = "Arch Linux contributors"
+SPDX-License-Identifier = "0BSD"
+
+[[annotations]]
+path = [
+    "db-5.3.21-memp_stat-upstream-fix.patch",
+    "db-5.3.21-mutex_leak.patch",
+    "db-5.3.28-atomic_compare_exchange.patch",
+    "db-5.3.28-fcntl-mutexes-bdb4.8.patch",
+    "db-5.3.28-lemon_hash.patch",
+    "db-5.3.28-mmap-high-cpu-usage.patch",
+    "db-5.3.28-tls-configure.patch",
+    "db-5.3.28_cve-2019-2708.patch",
+]
+SPDX-FileCopyrightText = "db5.3 contributors"
+SPDX-License-Identifier = "Sleepycat"
