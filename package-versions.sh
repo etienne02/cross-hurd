@@ -76,7 +76,7 @@ GIT_PKG=$GIT_SRC.tar.xz
 GIT_URL=https://www.kernel.org/pub/software/scm/git/$GIT_PKG
 
 # openssl
-OPENSSL_VERSION=3.3.1
+OPENSSL_VERSION=3.5.2
 OPENSSL_SRC=openssl-$OPENSSL_VERSION
 OPENSSL_PKG=$OPENSSL_SRC.tar.gz
 OPENSSL_URL=https://www.openssl.org/source/$OPENSSL_PKG
