@@ -176,7 +176,10 @@ download_glibc() {
 }
 
 download_gcc() {
-  download_package $GCC_URL
+  download_package $GCC_URL &&
+    pushd $GCC_SRC &&
+    apply_patch $SCRIPT_DIR/patches/gcc/0001-libgomp-Fix-GCC-build-after-glibc-cd748a6.patch 1 &&
+    popd
 }
 
 download_sed() {
