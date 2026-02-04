@@ -24,7 +24,7 @@ PERL_VERSION=5.40.0
 # Mach, Hurd and Glibc are all taken from the Git repository.
 
 # coreutils
-COREUTILS_VERSION=9.5
+COREUTILS_VERSION=9.10
 COREUTILS_SRC=coreutils-$COREUTILS_VERSION
 COREUTILS_PKG=$COREUTILS_SRC.tar.xz
 COREUTILS_URL=$GNU_REPO/coreutils/$COREUTILS_PKG
