@@ -856,12 +856,13 @@ install_rump() {
       -V MKBINUTILS=no -V MKGDB=no -V MKGROFF=no \
       -V MKDTRACE=no -V MKZFS=no \
       -V TOPRUMP=$SOURCE/rumpkernel/buildrump.sh/src/sys/rump \
-      -V BUILDRUMP_CPPFLAGS="-Wno-error=stringop-overread" \
+      -V BUILDRUMP_CPPFLAGS="" \
       -V RUMPUSER_EXTERNAL_DPLIBS=pthread \
       -V CPPFLAGS="-I$OBJ/destdir/usr/include -D_FILE_OFFSET_BITS=64 -DRUMP_REGISTER_T=int -DRUMPUSER_CONFIG=yes -DNO_PCI_MSI_MSIX=yes -DNUSB_DMA=1 -DPAE -DBUFPAGES=16" \
-      -V CWARNFLAGS="-Wno-error=maybe-uninitialized -Wno-error=address-of-packed-member -Wno-error=unused-variable -Wno-error=stack-protector -Wno-error=array-parameter -Wno-error=array-bounds -Wno-error=stringop-overflow -Wno-error=int-to-pointer-cast -Wno-error=incompatible-pointer-types -Wno-error=unterminated-string-initialization" \
+      -V CWARNFLAGS="" \
       -V LIBCRTBEGIN=" " -V LIBCRTEND=" " -V LIBCRT0=" " -V LIBCRTI=" " \
       -V MIG=mig \
+	  -V NOGCCERROR=1 \
       -V DESTDIR=$OBJ/destdir \
       -V _GCC_CRTENDS=" " -V _GCC_CRTEND=" " \
       -V _GCC_CRTBEGINS=" " -V _GCC_CRTBEGIN=" " \
