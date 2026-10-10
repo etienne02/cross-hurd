@@ -1740,7 +1740,7 @@ install_networking_tools() {
     install_iana_etc &&
     install_inetutils &&
     install_openssl &&
-    install_wget &&
+    #install_wget &&
     install_libunistring &&
     install_libidn2 &&
     install_libpsl &&
