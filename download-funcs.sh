@@ -20,7 +20,7 @@ LIBXCRYPT_URL=https://github.com/besser82/libxcrypt/releases/download/v$LIBXCRYP
 DMIDECODE_URL=http://download.savannah.gnu.org/releases/dmidecode/$DMIDECODE_PKG
 IANA_ETC_URL=https://github.com/Mic92/iana-etc/releases/download/$IANA_ETC_VERSION/$IANA_ETC_PKG
 WGET_URL=$GNU_REPO/wget/$WGET_PKG
-PERL_CROSS_URL=https://github.com/arsv/perl-cross/raw/releases/$PERL_CROSS_PKG
+PERL_CROSS_URL=https://github.com/arsv/perl-cross/releases/download/$PERL_CROSS_VERSION/$PERL_CROSS_PKG
 PERL_URL=https://www.cpan.org/src/5.0/$PERL_PKG
 
 unpack() {
